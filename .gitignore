@@ -3,6 +3,7 @@ dist
 .astro
 public/data/
 .scripture/
+.scripture.env
 .env
 playwright-report/
 test-results/

@@ -31,7 +31,21 @@ Settings → Builds → **Build watch paths**: include `*`, exclude `docs/**` an
 
 `BK_ALLOW_FIXTURE_SCRIPTURE` is a CI-only escape hatch. **Never set it in Cloudflare**, or production could ship the fixture test book.
 
-## 5. GitHub repo settings (`biblekarta`)
+## 5. Scripture text in the build
+`scripts/fetch-scripture.sh` runs before every build (Cloudflare and CI):
+- **With `SCRIPTURE_TOKEN` and a commit SHA in `scripture.lock`:** it fetches exactly that commit of `biblekarta-scripture` into `.scripture/` and logs `using scripture <sha>`. The token reaches git only through a `GIT_ASKPASS` helper and is never printed.
+- **Otherwise:** it uses `scripture-fixtures/` (a made-up test book) and logs `using scripture fixtures`.
+
+The choice is written to `.scripture.env`, which `pnpm verify:scripture` and `pnpm build` read. The build copies the **verified** books byte-for-byte to `/data/scripture/<id>.json` and re-checks every verse against `checksums.json`.
+
+**Production guard:** a production build (no `BK_SEED=1`) **fails** while the scripture is the fixture book. This is on purpose, so the live site can never show the test book. Until the first text release exists, production deploys of `main` therefore fail; previews (which set `BK_SEED=1`) work.
+
+**Releasing a new text version:**
+1. In `biblekarta-scripture`, after `bk finalize` and a green `bk verify`: `git tag text-v<N> && git push origin text-v<N>`.
+2. Get the commit: `git -C ../biblekarta-scripture rev-parse text-v<N>`.
+3. Put that 40-character SHA in this repo's `scripture.lock` (it is `none` until text-v1 exists), in a PR a code owner approves.
+
+## 6. GitHub repo settings (`biblekarta`)
 - **Actions secrets:** `CLAUDE_CODE_OAUTH_TOKEN` (for the Claude PR review; from `claude setup-token`, uses your Claude subscription) and `SCRIPTURE_TOKEN` (the same PAT as above).
 - **Labels:**
   ```
@@ -41,5 +55,5 @@ Settings → Builds → **Build watch paths**: include `*`, exclude `docs/**` an
   ```
 - Rulesets, CODEOWNERS and repo options: see `docs/repo-rules.md`.
 
-## 6. Check it
+## 7. Check it
 Push a `task/*` branch and open a PR. Cloudflare comments a preview URL, and the page shows "የመጽሐፍ ቅዱስ ካርታ".
