@@ -1,0 +1,11 @@
+{
+  "id": "test-anchor",
+  "label_am": "የሙከራ መልሕቅ",
+  "label_en": "Test anchor",
+  "date": {
+    "start": -800
+  },
+  "external_source": "Test source (fixture)",
+  "confidence": "high",
+  "fixture": true
+}

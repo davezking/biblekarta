@@ -1,0 +1,9 @@
+{
+  "_comment": "axis.traditional.prefix (ከፍጥረት) is pending reviewer approval: ዓ.ዓ. already means BC in everyday Amharic (PRD risk #3). Templates: {year} is a number or range, {date} a formatted date.",
+  "date.bc": "{year} ዓ.ዓ.",
+  "date.ad": "{year} ዓ.ም.",
+  "date.approx": "በግምት {date}",
+  "date.disputed": "{date} (አከራካሪ)",
+  "date.tbd": "ያልተወሰነ",
+  "axis.traditional.prefix": "ከፍጥረት"
+}

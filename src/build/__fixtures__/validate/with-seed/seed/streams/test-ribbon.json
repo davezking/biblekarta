@@ -1,0 +1,18 @@
+{
+  "id": "test-ribbon",
+  "slug": "test-ribbon",
+  "name_am": "የሙከራ መንግሥት",
+  "name_en": "Test Ribbon",
+  "kind": "ribbon",
+  "fill_color": "#9DB28A",
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -900
+      },
+      "width": 3
+    }
+  ],
+  "lane_order": 2,
+  "fixture": true
+}

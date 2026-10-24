@@ -1,0 +1,12 @@
+pnpm-lock.yaml
+dist/
+.astro/
+public/data/
+.scripture/
+playwright-report/
+test-results/
+design-reference/
+docs/
+.github/
+.claude/
+*.md

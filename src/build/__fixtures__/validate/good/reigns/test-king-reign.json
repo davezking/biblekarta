@@ -1,0 +1,13 @@
+{
+  "id": "test-king-reign",
+  "person_id": "test-king",
+  "stream_id": "test-kingdom",
+  "start_scholarly": {
+    "start": -790,
+    "certainty": "exact",
+    "method": "anchor",
+    "source_id": "test-source"
+  },
+  "coregency_flag": false,
+  "fixture": true
+}

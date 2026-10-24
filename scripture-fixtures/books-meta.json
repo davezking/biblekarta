@@ -1,0 +1,464 @@
+[
+  {
+    "id": "gen",
+    "name_am": "ኦሪት ዘፍጥረት",
+    "name_en": "Genesis",
+    "order_66": 1,
+    "testament": "ot"
+  },
+  {
+    "id": "exo",
+    "name_am": "ኦሪት ዘጸአት",
+    "name_en": "Exodus",
+    "order_66": 2,
+    "testament": "ot"
+  },
+  {
+    "id": "lev",
+    "name_am": "ኦሪት ዘሌዋውያን",
+    "name_en": "Leviticus",
+    "order_66": 3,
+    "testament": "ot"
+  },
+  {
+    "id": "num",
+    "name_am": "ኦሪት ዘኍልቍ",
+    "name_en": "Numbers",
+    "order_66": 4,
+    "testament": "ot"
+  },
+  {
+    "id": "deu",
+    "name_am": "ኦሪት ዘዳግም",
+    "name_en": "Deuteronomy",
+    "order_66": 5,
+    "testament": "ot"
+  },
+  {
+    "id": "jos",
+    "name_am": "መጽሐፈ ኢያሱ ወልደ ነዌ",
+    "name_en": "Joshua",
+    "order_66": 6,
+    "testament": "ot"
+  },
+  {
+    "id": "jdg",
+    "name_am": "መጽሐፈ መሳፍንት",
+    "name_en": "Judges",
+    "order_66": 7,
+    "testament": "ot"
+  },
+  {
+    "id": "rut",
+    "name_am": "መጽሐፈ ሩት",
+    "name_en": "Ruth",
+    "order_66": 8,
+    "testament": "ot"
+  },
+  {
+    "id": "1sa",
+    "name_am": "መጽሐፈ ሳሙኤል ቀዳማዊ",
+    "name_en": "1 Samuel",
+    "order_66": 9,
+    "testament": "ot"
+  },
+  {
+    "id": "2sa",
+    "name_am": "መጽሐፈ ሳሙኤል ካልዕ",
+    "name_en": "2 Samuel",
+    "order_66": 10,
+    "testament": "ot"
+  },
+  {
+    "id": "1ki",
+    "name_am": "መጽሐፈ ነገሥት ቀዳማዊ",
+    "name_en": "1 Kings",
+    "order_66": 11,
+    "testament": "ot"
+  },
+  {
+    "id": "2ki",
+    "name_am": "መጽሐፈ ነገሥት ካልዕ",
+    "name_en": "2 Kings",
+    "order_66": 12,
+    "testament": "ot"
+  },
+  {
+    "id": "1ch",
+    "name_am": "መጽሐፈ ዜና መዋዕል ቀዳማዊ",
+    "name_en": "1 Chronicles",
+    "order_66": 13,
+    "testament": "ot"
+  },
+  {
+    "id": "2ch",
+    "name_am": "መጽሐፈ ዜና መዋዕል ካልዕ",
+    "name_en": "2 Chronicles",
+    "order_66": 14,
+    "testament": "ot"
+  },
+  {
+    "id": "ezr",
+    "name_am": "መጽሐፈ ዕዝራ",
+    "name_en": "Ezra",
+    "order_66": 15,
+    "testament": "ot"
+  },
+  {
+    "id": "neh",
+    "name_am": "መጽሐፈ ነህምያ",
+    "name_en": "Nehemiah",
+    "order_66": 16,
+    "testament": "ot"
+  },
+  {
+    "id": "est",
+    "name_am": "መጽሐፈ አስቴር",
+    "name_en": "Esther",
+    "order_66": 17,
+    "testament": "ot"
+  },
+  {
+    "id": "job",
+    "name_am": "መጽሐፈ ኢዮብ",
+    "name_en": "Job",
+    "order_66": 18,
+    "testament": "ot"
+  },
+  {
+    "id": "psa",
+    "name_am": "መዝሙረ ዳዊት",
+    "name_en": "Psalms",
+    "order_66": 19,
+    "testament": "ot"
+  },
+  {
+    "id": "pro",
+    "name_am": "መጽሐፈ ምሳሌ",
+    "name_en": "Proverbs",
+    "order_66": 20,
+    "testament": "ot"
+  },
+  {
+    "id": "ecc",
+    "name_am": "መጽሐፈ መክብብ",
+    "name_en": "Ecclesiastes",
+    "order_66": 21,
+    "testament": "ot"
+  },
+  {
+    "id": "sng",
+    "name_am": "መኃልየ መኃልይ",
+    "name_en": "Song of Solomon",
+    "order_66": 22,
+    "testament": "ot"
+  },
+  {
+    "id": "isa",
+    "name_am": "ትንቢተ ኢሳይያስ",
+    "name_en": "Isaiah",
+    "order_66": 23,
+    "testament": "ot"
+  },
+  {
+    "id": "jer",
+    "name_am": "ትንቢተ ኤርምያስ",
+    "name_en": "Jeremiah",
+    "order_66": 24,
+    "testament": "ot"
+  },
+  {
+    "id": "lam",
+    "name_am": "ሰቆቃወ ኤርምያስ",
+    "name_en": "Lamentations",
+    "order_66": 25,
+    "testament": "ot"
+  },
+  {
+    "id": "ezk",
+    "name_am": "ትንቢተ ሕዝቅኤል",
+    "name_en": "Ezekiel",
+    "order_66": 26,
+    "testament": "ot"
+  },
+  {
+    "id": "dan",
+    "name_am": "ትንቢተ ዳንኤል",
+    "name_en": "Daniel",
+    "order_66": 27,
+    "testament": "ot"
+  },
+  {
+    "id": "hos",
+    "name_am": "ትንቢተ ሆሴዕ",
+    "name_en": "Hosea",
+    "order_66": 28,
+    "testament": "ot"
+  },
+  {
+    "id": "amo",
+    "name_am": "ትንቢተ አሞጽ",
+    "name_en": "Amos",
+    "order_66": 29,
+    "testament": "ot"
+  },
+  {
+    "id": "mic",
+    "name_am": "ትንቢተ ሚክያስ",
+    "name_en": "Micah",
+    "order_66": 30,
+    "testament": "ot"
+  },
+  {
+    "id": "jol",
+    "name_am": "ትንቢተ ኢዩኤል",
+    "name_en": "Joel",
+    "order_66": 31,
+    "testament": "ot"
+  },
+  {
+    "id": "oba",
+    "name_am": "ትንቢተ አብድዩ",
+    "name_en": "Obadiah",
+    "order_66": 32,
+    "testament": "ot"
+  },
+  {
+    "id": "jon",
+    "name_am": "ትንቢተ ዮናስ",
+    "name_en": "Jonah",
+    "order_66": 33,
+    "testament": "ot"
+  },
+  {
+    "id": "nam",
+    "name_am": "ትንቢተ ናሆም",
+    "name_en": "Nahum",
+    "order_66": 34,
+    "testament": "ot"
+  },
+  {
+    "id": "hab",
+    "name_am": "ትንቢተ ዕንባቆም",
+    "name_en": "Habakkuk",
+    "order_66": 35,
+    "testament": "ot"
+  },
+  {
+    "id": "zep",
+    "name_am": "ትንቢተ ሶፎንያስ",
+    "name_en": "Zephaniah",
+    "order_66": 36,
+    "testament": "ot"
+  },
+  {
+    "id": "hag",
+    "name_am": "ትንቢተ ሐጌ",
+    "name_en": "Haggai",
+    "order_66": 37,
+    "testament": "ot"
+  },
+  {
+    "id": "zec",
+    "name_am": "ትንቢተ ዘካርያስ",
+    "name_en": "Zechariah",
+    "order_66": 38,
+    "testament": "ot"
+  },
+  {
+    "id": "mal",
+    "name_am": "ትንቢተ ሚልክያስ",
+    "name_en": "Malachi",
+    "order_66": 39,
+    "testament": "ot"
+  },
+  {
+    "id": "mat",
+    "name_am": "የማቴዎስ ወንጌል",
+    "name_en": "Matthew",
+    "order_66": 40,
+    "testament": "nt"
+  },
+  {
+    "id": "mrk",
+    "name_am": "የማርቆስ ወንጌል",
+    "name_en": "Mark",
+    "order_66": 41,
+    "testament": "nt"
+  },
+  {
+    "id": "luk",
+    "name_am": "የሉቃስ ወንጌል",
+    "name_en": "Luke",
+    "order_66": 42,
+    "testament": "nt"
+  },
+  {
+    "id": "jhn",
+    "name_am": "የዮሐንስ ወንጌል",
+    "name_en": "John",
+    "order_66": 43,
+    "testament": "nt"
+  },
+  {
+    "id": "act",
+    "name_am": "የሐዋርያት ሥራ",
+    "name_en": "Acts",
+    "order_66": 44,
+    "testament": "nt"
+  },
+  {
+    "id": "rom",
+    "name_am": "ወደ ሮሜ ሰዎች",
+    "name_en": "Romans",
+    "order_66": 45,
+    "testament": "nt"
+  },
+  {
+    "id": "1co",
+    "name_am": "ወደ ቆሮንቶስ ሰዎች 1",
+    "name_en": "1 Corinthians",
+    "order_66": 46,
+    "testament": "nt"
+  },
+  {
+    "id": "2co",
+    "name_am": "ወደ ቆሮንቶስ ሰዎች 2",
+    "name_en": "2 Corinthians",
+    "order_66": 47,
+    "testament": "nt"
+  },
+  {
+    "id": "gal",
+    "name_am": "ወደ ገላትያ ሰዎች",
+    "name_en": "Galatians",
+    "order_66": 48,
+    "testament": "nt"
+  },
+  {
+    "id": "eph",
+    "name_am": "ወደ ኤፌሶን ሰዎች",
+    "name_en": "Ephesians",
+    "order_66": 49,
+    "testament": "nt"
+  },
+  {
+    "id": "php",
+    "name_am": "ወደ ፊልጵስዩስ ሰዎች",
+    "name_en": "Philippians",
+    "order_66": 50,
+    "testament": "nt"
+  },
+  {
+    "id": "col",
+    "name_am": "ወደ ቈላስይስ ሰዎች",
+    "name_en": "Colossians",
+    "order_66": 51,
+    "testament": "nt"
+  },
+  {
+    "id": "1th",
+    "name_am": "ወደ ተሰሎንቄ ሰዎች 1",
+    "name_en": "1 Thessalonians",
+    "order_66": 52,
+    "testament": "nt"
+  },
+  {
+    "id": "2th",
+    "name_am": "ወደ ተሰሎንቄ ሰዎች 2",
+    "name_en": "2 Thessalonians",
+    "order_66": 53,
+    "testament": "nt"
+  },
+  {
+    "id": "1ti",
+    "name_am": "ወደ ጢሞቴዎስ 1",
+    "name_en": "1 Timothy",
+    "order_66": 54,
+    "testament": "nt"
+  },
+  {
+    "id": "2ti",
+    "name_am": "ወደ ጢሞቴዎስ 2",
+    "name_en": "2 Timothy",
+    "order_66": 55,
+    "testament": "nt"
+  },
+  {
+    "id": "tit",
+    "name_am": "ወደ ቲቶ",
+    "name_en": "Titus",
+    "order_66": 56,
+    "testament": "nt"
+  },
+  {
+    "id": "phm",
+    "name_am": "ወደ ፊልሞና",
+    "name_en": "Philemon",
+    "order_66": 57,
+    "testament": "nt"
+  },
+  {
+    "id": "heb",
+    "name_am": "ወደ ዕብራውያን",
+    "name_en": "Hebrews",
+    "order_66": 58,
+    "testament": "nt"
+  },
+  {
+    "id": "1pe",
+    "name_am": "የጴጥሮስ መልእክት 1",
+    "name_en": "1 Peter",
+    "order_66": 59,
+    "testament": "nt"
+  },
+  {
+    "id": "2pe",
+    "name_am": "የጴጥሮስ መልእክት 2",
+    "name_en": "2 Peter",
+    "order_66": 60,
+    "testament": "nt"
+  },
+  {
+    "id": "1jn",
+    "name_am": "የዮሐንስ መልእክት 1",
+    "name_en": "1 John",
+    "order_66": 61,
+    "testament": "nt"
+  },
+  {
+    "id": "2jn",
+    "name_am": "የዮሐንስ መልእክት 2",
+    "name_en": "2 John",
+    "order_66": 62,
+    "testament": "nt"
+  },
+  {
+    "id": "3jn",
+    "name_am": "የዮሐንስ መልእክት 3",
+    "name_en": "3 John",
+    "order_66": 63,
+    "testament": "nt"
+  },
+  {
+    "id": "jas",
+    "name_am": "የያዕቆብ መልእክት",
+    "name_en": "James",
+    "order_66": 64,
+    "testament": "nt"
+  },
+  {
+    "id": "jud",
+    "name_am": "የይሁዳ መልእክት",
+    "name_en": "Jude",
+    "order_66": 65,
+    "testament": "nt"
+  },
+  {
+    "id": "rev",
+    "name_am": "የዮሐንስ ራእይ",
+    "name_en": "Revelation",
+    "order_66": 66,
+    "testament": "nt"
+  }
+]

@@ -1,0 +1,8 @@
+# Replace <OWNER> and <REVIEWER> with GitHub usernames; see docs/repo-rules.md.
+/content/                    @<OWNER> @<REVIEWER>
+/scripture.lock              @<OWNER>
+/.github/                    @<OWNER>
+/workers/                    @<OWNER>
+/public/admin/               @<OWNER>
+/src/build/verify-scripture.ts @<OWNER>
+/scripts/fetch-scripture.sh  @<OWNER>
