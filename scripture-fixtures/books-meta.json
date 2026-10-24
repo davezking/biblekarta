@@ -50,7 +50,7 @@
   },
   {
     "id": "rut",
-    "name_am": null,
+    "name_am": "መጽሐፈ ሩት",
     "name_en": "Ruth",
     "order_66": 8,
     "testament": "ot"
@@ -141,7 +141,7 @@
   },
   {
     "id": "ecc",
-    "name_am": null,
+    "name_am": "መጽሐፈ መክብብ",
     "name_en": "Ecclesiastes",
     "order_66": 21,
     "testament": "ot"
@@ -204,7 +204,7 @@
   },
   {
     "id": "mic",
-    "name_am": null,
+    "name_am": "ትንቢተ ሚክያስ",
     "name_en": "Micah",
     "order_66": 30,
     "testament": "ot"
@@ -218,7 +218,7 @@
   },
   {
     "id": "oba",
-    "name_am": null,
+    "name_am": "ትንቢተ አብድዩ",
     "name_en": "Obadiah",
     "order_66": 32,
     "testament": "ot"
@@ -232,21 +232,21 @@
   },
   {
     "id": "nam",
-    "name_am": null,
+    "name_am": "ትንቢተ ናሆም",
     "name_en": "Nahum",
     "order_66": 34,
     "testament": "ot"
   },
   {
     "id": "hab",
-    "name_am": null,
+    "name_am": "ትንቢተ ዕንባቆም",
     "name_en": "Habakkuk",
     "order_66": 35,
     "testament": "ot"
   },
   {
     "id": "zep",
-    "name_am": null,
+    "name_am": "ትንቢተ ሶፎንያስ",
     "name_en": "Zephaniah",
     "order_66": 36,
     "testament": "ot"
@@ -309,7 +309,7 @@
   },
   {
     "id": "rom",
-    "name_am": null,
+    "name_am": "ወደ ሮሜ ሰዎች",
     "name_en": "Romans",
     "order_66": 45,
     "testament": "nt"
@@ -323,21 +323,21 @@
   },
   {
     "id": "2co",
-    "name_am": null,
+    "name_am": "ወደ ቆሮንቶስ ሰዎች 2",
     "name_en": "2 Corinthians",
     "order_66": 47,
     "testament": "nt"
   },
   {
     "id": "gal",
-    "name_am": null,
+    "name_am": "ወደ ገላትያ ሰዎች",
     "name_en": "Galatians",
     "order_66": 48,
     "testament": "nt"
   },
   {
     "id": "eph",
-    "name_am": null,
+    "name_am": "ወደ ኤፌሶን ሰዎች",
     "name_en": "Ephesians",
     "order_66": 49,
     "testament": "nt"
@@ -365,7 +365,7 @@
   },
   {
     "id": "2th",
-    "name_am": null,
+    "name_am": "ወደ ተሰሎንቄ ሰዎች 2",
     "name_en": "2 Thessalonians",
     "order_66": 53,
     "testament": "nt"
@@ -379,28 +379,28 @@
   },
   {
     "id": "2ti",
-    "name_am": null,
+    "name_am": "ወደ ጢሞቴዎስ 2",
     "name_en": "2 Timothy",
     "order_66": 55,
     "testament": "nt"
   },
   {
     "id": "tit",
-    "name_am": null,
+    "name_am": "ወደ ቲቶ",
     "name_en": "Titus",
     "order_66": 56,
     "testament": "nt"
   },
   {
     "id": "phm",
-    "name_am": null,
+    "name_am": "ወደ ፊልሞና",
     "name_en": "Philemon",
     "order_66": 57,
     "testament": "nt"
   },
   {
     "id": "heb",
-    "name_am": null,
+    "name_am": "ወደ ዕብራውያን",
     "name_en": "Hebrews",
     "order_66": 58,
     "testament": "nt"
@@ -414,21 +414,21 @@
   },
   {
     "id": "2pe",
-    "name_am": null,
+    "name_am": "የጴጥሮስ መልእክት 2",
     "name_en": "2 Peter",
     "order_66": 60,
     "testament": "nt"
   },
   {
     "id": "1jn",
-    "name_am": null,
+    "name_am": "የዮሐንስ መልእክት 1",
     "name_en": "1 John",
     "order_66": 61,
     "testament": "nt"
   },
   {
     "id": "2jn",
-    "name_am": null,
+    "name_am": "የዮሐንስ መልእክት 2",
     "name_en": "2 John",
     "order_66": 62,
     "testament": "nt"
@@ -449,7 +449,7 @@
   },
   {
     "id": "jud",
-    "name_am": null,
+    "name_am": "የይሁዳ መልእክት",
     "name_en": "Jude",
     "order_66": 65,
     "testament": "nt"

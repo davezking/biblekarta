@@ -8,6 +8,11 @@ describe('scripture-fixtures/books-meta.json', () => {
     expect(new Set(books.map((b) => b.id)).size).toBe(66);
   });
 
+  it('every book has a unique scan name', () => {
+    expect(new Set(books.map((b) => b.name_am)).size).toBe(66);
+    expect(books.every((b) => b.name_am)).toBe(true);
+  });
+
   it('order_66 is a permutation of 1..66', () => {
     const orders = books.map((b) => b.order_66).sort((a, b) => a - b);
     expect(orders).toEqual(Array.from({ length: 66 }, (_, i) => i + 1));
