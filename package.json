@@ -16,7 +16,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "validate": "tsx src/build/validate-content.ts",
-    "verify:scripture": "tsx src/build/verify-scripture.ts"
+    "verify:scripture": "tsx src/build/verify-scripture.ts",
+    "fonts:subset": "node scripts/subset-fonts.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.1",
@@ -54,6 +55,7 @@
     "globals": "^17.13.0",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.2",
+    "subset-font": "^2.9.0",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.0",

@@ -1,4 +1,7 @@
 ---
+import '../styles/fonts.css';
+import '../styles/base.css';
+
 interface Props {
   title?: string;
 }
@@ -11,9 +14,16 @@ const { title = 'የመጽሐፍ ቅዱስ ካርታ' } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
+    <link
+      rel="preload"
+      href="/fonts/AbyssinicaSIL-Regular.subset.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <slot name="head" />
   </head>
-  <body>
+  <body class="vellum">
     <slot />
   </body>
 </html>

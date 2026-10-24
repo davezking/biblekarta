@@ -1,0 +1,12 @@
+---
+import Base from '../../layouts/Base.astro';
+import Playground from '../../components/dev/Playground';
+---
+
+<Base title="Playground">
+  <meta slot="head" name="robots" content="noindex" />
+  <main>
+    <h1 lang="en">Playground</h1>
+    <Playground client:load />
+  </main>
+</Base>
