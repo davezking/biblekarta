@@ -2,6 +2,7 @@ name: claude-review
 # Automated Claude review of task PRs into phase branches. The `review` job is a REQUIRED check on phase-*,
 # so auto-merge waits for it. Needs the repository secret CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`;
 # it uses the owner's Claude subscription, not API credits). Fork PRs are skipped: they get no secrets.
+# Until the secret is set, the job skips the review with a notice and passes, instead of failing every PR.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -21,12 +22,21 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
+    env:
+      # Secrets can't be used in `if:` directly; this is "true" once the secret is set.
+      HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
     steps:
+      - name: Skip the review while CLAUDE_CODE_OAUTH_TOKEN is not set
+        if: env.HAS_TOKEN != 'true'
+        run: |
+          echo "::notice title=Claude review skipped::The CLAUDE_CODE_OAUTH_TOKEN secret is not set, so this PR was not reviewed by Claude. Add the secret (from \`claude setup-token\`) to turn the review on."
       - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
         with:
           fetch-depth: 1
 
       - name: Reset verdict labels
+        if: env.HAS_TOKEN == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -36,6 +46,7 @@ jobs:
             --remove-label claude:approved --remove-label claude:changes || true
 
       - uses: anthropics/claude-code-action@v1
+        if: env.HAS_TOKEN == 'true'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
@@ -60,6 +71,7 @@ jobs:
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr edit:*)"
 
       - name: Turn the verdict into a pass/fail check
+        if: env.HAS_TOKEN == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

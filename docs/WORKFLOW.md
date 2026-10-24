@@ -13,7 +13,7 @@ Every task file has a `repo:` field. `scripts/run-task.sh` runs a task in the ri
 1. Create both repos on GitHub: `biblekarta` **public**, `biblekarta-scripture` **private**. Unpack `biblekarta/` and `biblekarta-scripture/` from the plan zip into them, and commit to `main`.
 2. Put the Society's `am_new.zip` in `biblekarta-scripture/source/` and commit it (private repo only).
 3. Create a fine-grained PAT, `SCRIPTURE_TOKEN`, with **Contents: read** on `biblekarta-scripture` only. Add it as an Actions secret in `biblekarta`, and as an encrypted env var in Cloudflare Pages (Preview + Production).
-4. On your own machine, logged in to Claude Code with your Claude subscription, run `claude setup-token`. Add the token it prints as the Actions secret `CLAUDE_CODE_OAUTH_TOKEN` in **both** repos. PR reviews then use your subscription's usage limits instead of paid API credits.
+4. On your own machine, logged in to Claude Code with your Claude subscription, run `claude setup-token`. Add the token it prints as the Actions secret `CLAUDE_CODE_OAUTH_TOKEN` in **both** repos. PR reviews then use your subscription's usage limits instead of paid API credits. Until the secret is added, the `review` check skips the review with a notice and passes, so PRs aren't blocked; it starts reviewing as soon as the secret exists.
 5. Follow `docs/deploy.md` (Cloudflare) and `docs/repo-rules.md` (rulesets + CODEOWNERS), both written by P1-S1-T1.
 6. **Review Claude Code's permission settings before running headless.** `run-task.sh` uses `--permission-mode acceptEdits`. In each repo's `.claude/settings.json`, allow only what the loop needs (`pnpm *`, `uv run *`, `uv sync *`, `git *`, `gh pr *`, `gh label *`, `scripts/*`) and keep everything else on ask.
 
