@@ -1,0 +1,55 @@
+---
+import Base from '../../../layouts/Base.astro';
+import RuleBadge from '../../../components/scripture/RuleBadge.astro';
+import VerseText from '../../../components/scripture/VerseText';
+import { loadVerifiedBooks, type VerifiedBook } from '../../../build/scripture-books';
+import { toGeez } from '../../../lib/core/geez';
+import { createT } from '../../../lib/i18n';
+
+export async function getStaticPaths() {
+  return (await loadVerifiedBooks()).map((book) => ({
+    params: { book: book.id },
+    props: { book },
+  }));
+}
+
+const { book } = Astro.props as { book: VerifiedBook };
+const t = createT('am');
+---
+
+<Base title={book.name_am}>
+  <meta slot="head" name="robots" content="noindex" />
+  <main class="page">
+    <p lang="en">
+      <a href="/dev/scripture/">← all books</a>
+    </p>
+    <h1 lang="am" class="ms">
+      {book.name_am}
+    </h1>
+    <RuleBadge />
+    {book.file.chapters.map((ch) => (
+      <section id={`c${ch.n}`}>
+        <h2 lang="am" class="ms ms-red">
+          {t('scripture.chapter', { n: toGeez(ch.n) })}
+        </h2>
+        <VerseText verses={ch.verses} />
+      </section>
+    ))}
+  </main>
+</Base>
+
+<style>
+  .page {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+    font-size: 1.15rem;
+    line-height: 1.7;
+  }
+  .page :global(.verse) {
+    margin: 0 0 0.4rem;
+  }
+  .page :global(.verse-n) {
+    margin-inline-end: 0.4em;
+  }
+</style>

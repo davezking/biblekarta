@@ -5,5 +5,8 @@
   "date.approx": "c. {date}",
   "date.disputed": "{date} (disputed)",
   "date.tbd": "TBD",
-  "axis.traditional.prefix": "AA"
+  "axis.traditional.prefix": "AA",
+  "scripture.chapter": "Chapter {n}",
+  "scripture.rule.pending-review": "pending ፡ rule (v{version})",
+  "scripture.rule.approved": "approved ፡ rule (v{version})"
 }

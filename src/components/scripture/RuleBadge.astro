@@ -1,0 +1,25 @@
+---
+// Shows the ፡ rule's review status on the preview pages until the reviewer approves it.
+import { createT } from '../../lib/i18n';
+import { SEPARATOR_RULE_STATUS, SEPARATOR_RULE_VERSION } from '../../lib/core/separators';
+
+const t = createT('am');
+const label = t(`scripture.rule.${SEPARATOR_RULE_STATUS}`, { version: SEPARATOR_RULE_VERSION });
+---
+
+{SEPARATOR_RULE_STATUS !== 'approved' && (
+  <p class="rule-badge" lang="am" data-status={SEPARATOR_RULE_STATUS}>
+    {label}
+  </p>
+)}
+
+<style>
+  .rule-badge {
+    display: inline-block;
+    margin: 0 0 1rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--ink-red);
+    border-radius: 0.25rem;
+    color: var(--ink-red);
+  }
+</style>

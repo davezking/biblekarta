@@ -53,6 +53,7 @@
     "eslint-plugin-astro": "^3.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
+    "happy-dom": "^20.14.6",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.2",
     "subset-font": "^2.9.0",

@@ -1,0 +1,107 @@
+---
+// About 30 real verses picked to cover the ፡ rule's edge cases, stored text beside the
+// rendered text, for the reviewer to compare with the scan pages.
+import Base from '../../../layouts/Base.astro';
+import RuleBadge from '../../../components/scripture/RuleBadge.astro';
+import VerseText from '../../../components/scripture/VerseText';
+import { loadVerifiedBooks } from '../../../build/scripture-books';
+import { loadBooks } from '../../../lib/core/books';
+import { resolveScriptureEnv } from '../../../build/verify-scripture';
+import { formatRef, parseRefKey } from '../../../lib/core/refs';
+import { pickSeparatorSamples, type SampleVerse } from '../../../lib/core/separator-samples';
+import { SEPARATOR_RULE_VERSION } from '../../../lib/core/separators';
+
+const books = await loadVerifiedBooks();
+const meta = await loadBooks((await resolveScriptureEnv()).SCRIPTURE_DIR);
+const verses: SampleVerse[] = books.flatMap((b) =>
+  b.file.chapters.flatMap((ch) =>
+    ch.verses.map((v) => ({ key: `${b.id}.${ch.n}.${v.n}`, n: v.n, to: v.to, t: v.t })),
+  ),
+);
+const samples = pickSeparatorSamples(verses);
+const index = new Map(meta.map((b) => [b.id, b]));
+const names = new Map(books.map((b) => [b.id, b.name_am]));
+const label = (s: (typeof samples)[number]) => {
+  const ref = parseRefKey(s.key);
+  if (s.to !== undefined) ref.verse_end = s.to;
+  return index.has(ref.book_id) ? formatRef(ref, index) : `${names.get(ref.book_id)} (${s.key})`;
+};
+---
+
+<Base title="Separator samples">
+  <meta slot="head" name="robots" content="noindex" />
+  <main class="page">
+    <p lang="en">
+      <a href="/dev/scripture/">← all books</a>
+    </p>
+    <h1 lang="en">፡ separator samples (rule v{SEPARATOR_RULE_VERSION})</h1>
+    <RuleBadge />
+    <p lang="en">
+      {samples.length} verses chosen automatically to cover the rule's edge cases. Compare each
+      rendered verse with the scan page; note any mismatch for the reviewer.
+    </p>
+    {samples.map((s) => (
+      <article class="sample" data-ref={s.key}>
+        <h2 lang="am" class="ms">
+          {label(s)} <small lang="en">{s.reasons.join(' · ')}</small>
+        </h2>
+        <div class="cols">
+          <pre lang="am" class="stored">{s.t}</pre>
+          <div class="rendered">
+            <VerseText verses={[{ n: s.n, to: s.to, t: s.t }]} />
+          </div>
+        </div>
+      </article>
+    ))}
+  </main>
+</Base>
+
+<style>
+  .page {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+  }
+  .sample {
+    border-top: 1px solid rgba(30, 23, 18, 0.25);
+    padding: 0.5rem 0 1rem;
+  }
+  .sample h2 {
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+  }
+  .sample small {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    color: var(--ink-red);
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  @media (max-width: 40rem) {
+    .cols {
+      grid-template-columns: 1fr;
+    }
+  }
+  .stored {
+    margin: 0;
+    padding: 0.5rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, monospace;
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(30, 23, 18, 0.25);
+  }
+  .rendered {
+    font-size: 1.15rem;
+    line-height: 1.7;
+  }
+  .rendered :global(.verse) {
+    margin: 0;
+  }
+  .rendered :global(.verse-n) {
+    margin-inline-end: 0.4em;
+  }
+</style>
