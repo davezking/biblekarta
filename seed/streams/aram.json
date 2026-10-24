@@ -1,0 +1,19 @@
+{
+  "id": "aram",
+  "slug": "aram",
+  "name_am": "ሶርያ ፡ አራም ፡ ደማስቆ",
+  "name_en": "Aram (Damascus)",
+  "kind": "lane",
+  "fill_color": "#B7B9C9",
+  "lane_order": 7,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -999
+      },
+      "width": 1
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

@@ -1,0 +1,19 @@
+{
+  "id": "assyria",
+  "slug": "assyria",
+  "name_am": "አሦር",
+  "name_en": "Assyria",
+  "kind": "lane",
+  "fill_color": "#93A487",
+  "lane_order": 9,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -999
+      },
+      "width": 1
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

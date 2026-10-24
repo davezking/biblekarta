@@ -1,0 +1,24 @@
+{
+  "id": "jehu-tribute",
+  "slug": "jehu-tribute",
+  "title_am": "የኢዩ ግብር",
+  "title_en": "Jehu's tribute",
+  "stream_id": "assyria",
+  "type": "point",
+  "importance": 3,
+  "date_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "date_scholarly": {
+    "start": -840,
+    "certainty": "exact",
+    "method": "anchor",
+    "anchor_id": "jehu-tribute-841"
+  },
+  "refs": [],
+  "note_am": "ጥቁሩ ሐውልት",
+  "canon": "shared",
+  "fixture": true
+}

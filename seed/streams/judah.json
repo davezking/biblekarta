@@ -1,0 +1,23 @@
+{
+  "id": "judah",
+  "slug": "judah",
+  "name_am": "የይሁዳ ፡ መንግሥት (ደቡብ) ፡ ኢየሩሳሌም",
+  "name_en": "Kingdom of Judah (south)",
+  "kind": "polity",
+  "fill_color": "#DE9479",
+  "lane_order": 5,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -930
+      },
+      "width": 3
+    }
+  ],
+  "parent_stream_id": "united",
+  "fork": {
+    "scholarly": -930
+  },
+  "canon": "shared",
+  "fixture": true
+}

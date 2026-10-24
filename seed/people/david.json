@@ -1,0 +1,13 @@
+{
+  "id": "david",
+  "slug": "david",
+  "name_am": "ዳዊት",
+  "name_en": "David",
+  "aliases": [],
+  "figure_kind": "king",
+  "importance": 5,
+  "stream_id": "united",
+  "refs": [],
+  "canon": "shared",
+  "fixture": true
+}

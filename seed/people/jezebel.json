@@ -1,0 +1,39 @@
+{
+  "id": "jezebel",
+  "slug": "jezebel",
+  "name_am": "ኤልዛቤል",
+  "name_en": "Jezebel",
+  "aliases": [],
+  "figure_kind": "queen",
+  "importance": 3,
+  "stream_id": "israel",
+  "birth_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "death_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "birth_scholarly": {
+    "certainty": "approximate",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "death_scholarly": {
+    "certainty": "approximate",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 16,
+      "verse_start": 31
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

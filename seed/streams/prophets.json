@@ -1,0 +1,19 @@
+{
+  "id": "prophets",
+  "slug": "prophets",
+  "name_am": "ነቢያት",
+  "name_en": "Prophets",
+  "kind": "ribbon",
+  "fill_color": "#D8DFC0",
+  "lane_order": 1,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -999
+      },
+      "width": 1
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

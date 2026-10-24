@@ -1,0 +1,19 @@
+{
+  "id": "ahab",
+  "slug": "ahab",
+  "name_am": "አክዓብ",
+  "name_en": "Ahab",
+  "aliases": [],
+  "figure_kind": "king",
+  "importance": 4,
+  "stream_id": "israel",
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 16,
+      "verse_start": 29
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

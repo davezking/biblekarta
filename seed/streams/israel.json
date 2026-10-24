@@ -1,0 +1,23 @@
+{
+  "id": "israel",
+  "slug": "israel",
+  "name_am": "የእስራኤል ፡ መንግሥት (ሰሜን) ፡ ሰማርያ",
+  "name_en": "Kingdom of Israel (north)",
+  "kind": "polity",
+  "fill_color": "#E2B54F",
+  "lane_order": 3,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -930
+      },
+      "width": 3
+    }
+  ],
+  "parent_stream_id": "united",
+  "fork": {
+    "scholarly": -930
+  },
+  "canon": "shared",
+  "fixture": true
+}

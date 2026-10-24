@@ -1,0 +1,17 @@
+{
+  "id": "jehoshaphat-allied-ahab",
+  "person_a_id": "jehoshaphat",
+  "person_b_id": "ahab",
+  "type": "allied",
+  "label_am": "ኢዮሣፍጥና አክዓብ ተባበሩ",
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 22,
+      "verse_start": 1,
+      "verse_end": 53
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

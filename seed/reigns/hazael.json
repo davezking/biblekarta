@@ -1,0 +1,26 @@
+{
+  "id": "hazael",
+  "person_id": "hazael",
+  "stream_id": "aram",
+  "coregency_flag": false,
+  "start_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "end_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "start_scholarly": {
+    "start": -841,
+    "certainty": "approximate",
+    "method": "derived",
+    "anchor_id": "jehu-tribute-841",
+    "anchor_value_used": -840,
+    "source_id": "thiele"
+  },
+  "canon": "shared",
+  "fixture": true
+}

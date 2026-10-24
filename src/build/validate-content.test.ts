@@ -104,3 +104,52 @@ describe('validateContent', () => {
     );
   });
 });
+
+describe('seed/', () => {
+  async function seedFiles(): Promise<{ file: string; data: unknown }[]> {
+    const { readdir, readFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const out: { file: string; data: unknown }[] = [];
+    for (const dir of await readdir('seed')) {
+      if (dir.startsWith('.')) continue;
+      for (const name of await readdir(join('seed', dir))) {
+        if (!name.endsWith('.json')) continue;
+        const file = join('seed', dir, name);
+        out.push({ file, data: JSON.parse(await readFile(file, 'utf8')) });
+      }
+    }
+    return out;
+  }
+
+  /** Every [path, value] pair whose key ends in "_traditional", anywhere in the object. */
+  function traditional(value: unknown, path = ''): [string, unknown][] {
+    if (!value || typeof value !== 'object') return [];
+    return Object.entries(value).flatMap(([k, v]) => {
+      const p = path ? `${path}.${k}` : k;
+      return [
+        ...(k.endsWith('_traditional') ? [[p, v] as [string, unknown]] : []),
+        ...traditional(v, p),
+      ];
+    });
+  }
+
+  it('validates with 0 errors (pnpm seed:check)', async () => {
+    expect(await validateContent({ dir: 'seed' })).toEqual([]);
+  });
+
+  it('all seed files are fixtures, and no traditional years appear in seed', async () => {
+    const files = await seedFiles();
+    expect(files.length).toBeGreaterThan(0);
+    for (const { file, data } of files) {
+      expect((data as { fixture?: unknown }).fixture, file).toBe(true);
+      for (const [path, v] of traditional(data)) {
+        const date = v as { method?: string; start?: unknown; end?: unknown };
+        expect(date.method, `${file} ${path}`).toBe('relative');
+        expect(date.start, `${file} ${path}`).toBeUndefined();
+        expect(date.end, `${file} ${path}`).toBeUndefined();
+      }
+      // YearPairs (stream forks/ends, era bounds, width keyframes) carry scholarly years only.
+      expect(JSON.stringify(data), file).not.toMatch(/"traditional":/);
+    }
+  });
+});

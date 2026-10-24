@@ -1,0 +1,29 @@
+{
+  "id": "sheba-visit",
+  "slug": "sheba-visit",
+  "title_am": "ንግሥተ ሳባ ሰሎሞንን ጎበኘች",
+  "title_en": "The Queen of Sheba visits Solomon",
+  "stream_id": "ethiopia",
+  "type": "point",
+  "importance": 4,
+  "date_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "date_scholarly": {
+    "certainty": "approximate",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 10,
+      "verse_start": 1,
+      "verse_end": 29
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

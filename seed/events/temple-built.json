@@ -1,0 +1,25 @@
+{
+  "id": "temple-built",
+  "slug": "temple-built",
+  "title_am": "ቤተ መቅደስ ተሠራ",
+  "title_en": "The temple is built",
+  "stream_id": "united",
+  "type": "point",
+  "importance": 4,
+  "date_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "date_scholarly": {
+    "start": -965,
+    "certainty": "approximate",
+    "method": "derived",
+    "anchor_id": "qarqar-853",
+    "anchor_value_used": -852,
+    "source_id": "thiele"
+  },
+  "refs": [],
+  "canon": "shared",
+  "fixture": true
+}
