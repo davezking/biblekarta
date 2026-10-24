@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="am">
+<head>
+<meta charset="utf-8">
+<title>Web app – brana-style chart</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Abyssinica+SIL&amp;family=Noto+Sans+Ethiopic:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E1712}a:hover{color:#8A1A12}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 1180px; box-sizing: border-box; background-color: #E9D8B4; background-image: radial-gradient(ellipse at 15% 8%, rgba(255,248,228,0.7), transparent 45%), radial-gradient(ellipse at 85% 75%, rgba(150,105,45,0.18), transparent 50%), radial-gradient(ellipse at 40% 110%, rgba(120,80,35,0.22), transparent 55%), radial-gradient(ellipse at 70% 20%, rgba(170,130,70,0.10), transparent 40%); box-shadow: inset 0 0 90px rgba(110,70,30,0.35); color: #1E1712; font-family: 'Noto Sans Ethiopic', sans-serif; padding: 28px 32px 36px; display: flex; flex-direction: column; gap: 18px">
+
+<header style="display: flex; flex-direction: column; gap: 14px">
+<svg width="100%" height="26" aria-hidden="true" style="display: block"><defs><pattern id="hg1" width="44" height="26" patternUnits="userSpaceOnUse"><rect width="44" height="26" fill="#E2B54F"></rect><path d="M0,13.0 C11,1 33,25 44,13.0" fill="none" stroke="#1E1712" stroke-width="7"></path><path d="M0,13.0 C11,1 33,25 44,13.0" fill="none" stroke="#A52119" stroke-width="3.6"></path><path d="M0,13.0 C11,25 33,1 44,13.0" fill="none" stroke="#1E1712" stroke-width="7"></path><path d="M0,13.0 C11,25 33,1 44,13.0" fill="none" stroke="#3F6B3A" stroke-width="3.6"></path><circle cx="22" cy="13.0" r="2.6" fill="#1E1712"></circle><circle cx="0" cy="13.0" r="2.6" fill="#1E1712"></circle><circle cx="44" cy="13.0" r="2.6" fill="#1E1712"></circle></pattern></defs><rect x="1" y="1" width="99.8%" height="24" fill="url(#hg1)" stroke="#1E1712" stroke-width="2"></rect></svg>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-family: 'Abyssinica SIL', 'Noto Serif Ethiopic', serif">
+<span style="font-size: 18px; color: #8A1A12">፨ ፨ ፨</span>
+<h1 style="margin: 0; font-size: 44px; font-weight: 400; line-height: 1.3; color: #8A1A12">የመጽሐፍ፡ቅዱስ፡ታሪክ፡በዘመናት፡ፍሰት</h1>
+<span style="font-size: 20px; color: #1E1712">ከንጉሥ ዳዊት እስከ ኢዩ ፡ ፲፻ – ፰፻ ዓመት ፡ ነገሥታት፣ ነቢያትና አጎራባች መንግሥታት ።</span>
+</div>
+<svg width="100%" height="18" aria-hidden="true" style="display: block"><defs><pattern id="hg2" width="44" height="18" patternUnits="userSpaceOnUse"><rect width="44" height="18" fill="#E2B54F"></rect><path d="M0,9.0 C11,1 33,17 44,9.0" fill="none" stroke="#1E1712" stroke-width="7"></path><path d="M0,9.0 C11,1 33,17 44,9.0" fill="none" stroke="#A52119" stroke-width="3.6"></path><path d="M0,9.0 C11,17 33,1 44,9.0" fill="none" stroke="#1E1712" stroke-width="7"></path><path d="M0,9.0 C11,17 33,1 44,9.0" fill="none" stroke="#3F6B3A" stroke-width="3.6"></path><circle cx="22" cy="9.0" r="2.6" fill="#1E1712"></circle><circle cx="0" cy="9.0" r="2.6" fill="#1E1712"></circle><circle cx="44" cy="9.0" r="2.6" fill="#1E1712"></circle></pattern></defs><rect x="1" y="1" width="99.8%" height="16" fill="url(#hg2)" stroke="#1E1712" stroke-width="2"></rect></svg>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex: 1 1 260px; max-width: 420px; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 22px; border: 1.5px solid #1E1712; background: #F1E4C6; color: #1E1712">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E1712" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+<label for="q3" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">ፈልግ</label>
+<input id="q3" type="search" placeholder="ሰው፣ ክስተት ወይም መጽሐፍ ይፈልጉ…" style="flex-grow: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; color: #1E1712; outline: none; min-width: 0">
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; border: 1.5px solid #1E1712; background: #DCC9A2">
+<button style="height: 38px; padding: 0 16px; border: none; border-radius: 9px; background: #8A1A12; color: #FFF6E4; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap">ታሪካዊ ምርምር</button>
+<button style="height: 38px; padding: 0 16px; border: none; border-radius: 9px; background: transparent; color: #1E1712; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap">ትውፊታዊ</button>
+</div>
+<div style="display: flex; gap: 8px; margin-left: auto">
+<button aria-label="አሳንስ" style="width: 44px; height: 44px; border-radius: 22px; border: 1.5px solid #1E1712; background: #F1E4C6; color: #1E1712; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+<button aria-label="አጉላ" style="width: 44px; height: 44px; border-radius: 22px; border: 1.5px solid #1E1712; background: #F1E4C6; color: #1E1712; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+<button style="height: 44px; padding: 0 14px; border-radius: 22px; border: 1.5px solid #1E1712; background: #F1E4C6; color: #1E1712; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">አማ / EN</button>
+</div>
+</div>
+
+<div style="border: 2px solid #1E1712; outline: 4px solid #A52119; outline-offset: 3px; overflow-x: auto; background-color: #E9D8B4; background-image: radial-gradient(ellipse at 15% 8%, rgba(255,248,228,0.7), transparent 45%), radial-gradient(ellipse at 85% 75%, rgba(150,105,45,0.18), transparent 50%), radial-gradient(ellipse at 40% 110%, rgba(120,80,35,0.22), transparent 55%), radial-gradient(ellipse at 70% 20%, rgba(170,130,70,0.10), transparent 40%)">
+<svg width="100%" height="16" aria-hidden="true" style="display: block"><defs><pattern id="hg3" width="44" height="16" patternUnits="userSpaceOnUse"><rect width="44" height="16" fill="#E2B54F"></rect><path d="M0,8.0 C11,1 33,15 44,8.0" fill="none" stroke="#1E1712" stroke-width="7"></path><path d="M0,8.0 C11,1 33,15 44,8.0" fill="none" stroke="#A52119" stroke-width="3.6"></path><path d="M0,8.0 C11,15 33,1 44,8.0" fill="none" stroke="#1E1712" stroke-width="7"></path><path d="M0,8.0 C11,15 33,1 44,8.0" fill="none" stroke="#3F6B3A" stroke-width="3.6"></path><circle cx="22" cy="8.0" r="2.6" fill="#1E1712"></circle><circle cx="0" cy="8.0" r="2.6" fill="#1E1712"></circle><circle cx="44" cy="8.0" r="2.6" fill="#1E1712"></circle></pattern></defs><rect x="1" y="1" width="99.8%" height="14" fill="url(#hg3)" stroke="#1E1712" stroke-width="2"></rect></svg>
+<div style="position: relative; width: 1600px; height: 780px">
+<svg width="1600" height="780" viewBox="0 0 1600 780" role="img" aria-label="ከ1000 እስከ 800 ዓ.ዓ. የነገሥታት፣ የነቢያትና የአጎራባች መንግሥታት የዘመን ፍሰት ሰንጠረዥ" style="position: absolute; left: 0; top: 0; font-family: 'Abyssinica SIL', 'Noto Serif Ethiopic', serif">
+<line x1="40.0" y1="30" x2="40.0" y2="750" stroke="#A88F62" stroke-width="1.2"></line>
+<text x="40.0" y="21" text-anchor="middle" font-size="15" fill="#8A1A12">፲፻</text>
+<text x="40.0" y="772" text-anchor="middle" font-size="13" fill="#4A3A28">1000</text>
+<line x1="116.0" y1="30" x2="116.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="116.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፱፻፺</text>
+<text x="116.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">990</text>
+<line x1="192.0" y1="30" x2="192.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="192.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፱፻፹</text>
+<text x="192.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">980</text>
+<line x1="268.0" y1="30" x2="268.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="268.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፱፻፸</text>
+<text x="268.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">970</text>
+<line x1="344.0" y1="30" x2="344.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="344.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፱፻፷</text>
+<text x="344.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">960</text>
+<line x1="420.0" y1="30" x2="420.0" y2="750" stroke="#A88F62" stroke-width="1.2"></line>
+<text x="420.0" y="21" text-anchor="middle" font-size="15" fill="#8A1A12">፱፻፶</text>
+<text x="420.0" y="772" text-anchor="middle" font-size="13" fill="#4A3A28">950</text>
+<line x1="496.0" y1="30" x2="496.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="496.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፱፻፵</text>
+<text x="496.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">940</text>
+<line x1="572.0" y1="30" x2="572.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="572.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፱፻፴</text>
+<text x="572.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">930</text>
+<line x1="648.0" y1="30" x2="648.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="648.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፱፻፳</text>
+<text x="648.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">920</text>
+<line x1="724.0" y1="30" x2="724.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="724.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፱፻፲</text>
+<text x="724.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">910</text>
+<line x1="800.0" y1="30" x2="800.0" y2="750" stroke="#A88F62" stroke-width="1.2"></line>
+<text x="800.0" y="21" text-anchor="middle" font-size="15" fill="#8A1A12">፱፻</text>
+<text x="800.0" y="772" text-anchor="middle" font-size="13" fill="#4A3A28">900</text>
+<line x1="876.0" y1="30" x2="876.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="876.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፰፻፺</text>
+<text x="876.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">890</text>
+<line x1="952.0" y1="30" x2="952.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="952.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፰፻፹</text>
+<text x="952.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">880</text>
+<line x1="1028.0" y1="30" x2="1028.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="1028.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፰፻፸</text>
+<text x="1028.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">870</text>
+<line x1="1104.0" y1="30" x2="1104.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="1104.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፰፻፷</text>
+<text x="1104.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">860</text>
+<line x1="1180.0" y1="30" x2="1180.0" y2="750" stroke="#A88F62" stroke-width="1.2"></line>
+<text x="1180.0" y="21" text-anchor="middle" font-size="15" fill="#8A1A12">፰፻፶</text>
+<text x="1180.0" y="772" text-anchor="middle" font-size="13" fill="#4A3A28">850</text>
+<line x1="1256.0" y1="30" x2="1256.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="1256.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፰፻፵</text>
+<text x="1256.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">840</text>
+<line x1="1332.0" y1="30" x2="1332.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="1332.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፰፻፴</text>
+<text x="1332.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">830</text>
+<line x1="1408.0" y1="30" x2="1408.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="1408.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፰፻፳</text>
+<text x="1408.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">820</text>
+<line x1="1484.0" y1="30" x2="1484.0" y2="750" stroke="#CDB993" stroke-width="0.8"></line>
+<text x="1484.0" y="21" text-anchor="middle" font-size="12.5" fill="#1E1712">፰፻፲</text>
+<text x="1484.0" y="772" text-anchor="middle" font-size="11" fill="#4A3A28">810</text>
+<line x1="1560.0" y1="30" x2="1560.0" y2="750" stroke="#A88F62" stroke-width="1.2"></line>
+<text x="1560.0" y="21" text-anchor="middle" font-size="15" fill="#8A1A12">፰፻</text>
+<text x="1560.0" y="772" text-anchor="middle" font-size="13" fill="#4A3A28">800</text>
+<line x1="0" y1="30" x2="1600" y2="30" stroke="#1E1712" stroke-width="1.5"></line><line x1="0" y1="750" x2="1600" y2="750" stroke="#1E1712" stroke-width="1.5"></line>
+<rect x="40" y="40" width="1520" height="40" rx="20" fill="#D8DFC0" stroke="#1E1712" stroke-width="1.8"></rect>
+<text x="58" y="66" text-anchor="start" font-size="16" fill="#8A1A12">ነቢያት</text>
+<circle cx="564.4" cy="60" r="5" fill="#A52119" stroke="#1E1712"></circle>
+<text x="573.4" y="66" text-anchor="start" font-size="14" fill="#1E1712">አኪያ</text>
+<rect x="1028.0" y="45" width="167.20000000000005" height="30" rx="15" fill="#B4C795" stroke="#1E1712" stroke-width="1.2" stroke-dasharray="5 3"></rect>
+<text x="1070.0" y="66" text-anchor="start" font-size="16" fill="#1E1712">ኤልያስ</text>
+<rect x="1195.2" y="45" width="364.79999999999995" height="30" rx="15" fill="#B4C795" stroke="#1E1712" stroke-width="1.2" stroke-dasharray="5 3"></rect>
+<text x="1237.2" y="66" text-anchor="start" font-size="16" fill="#1E1712">ኤልሳዕ ፡ (በግምት 848–797)</text>
+<rect x="40" y="95" width="1520" height="24" fill="#D9C39A" stroke="#1E1712" stroke-width="1.8"></rect>
+<text x="58" y="113" text-anchor="start" font-size="14" fill="#8A1A12">ሲዶና ፡ ፊንቄ</text>
+<rect x="898.8" y="98" width="235.60000000000014" height="18" rx="4" fill="#BFA06E" stroke="#1E1712" stroke-width="1"></rect>
+<text x="1016.6" y="112" text-anchor="middle" font-size="13" fill="#1E1712">ኤትበኣል ፡ ንጉሥ</text>
+<text x="1142.4" y="113" text-anchor="start" font-size="13" fill="#1E1712">← ልጁ ኤልዛቤል ለአክዓብ ተዳረች (1ኛ ነገ 16፥31)</text>
+<line x1="1028.0" y1="119" x2="1028.0" y2="145" stroke="#1E1712" stroke-width="1.6"></line>
+<line x1="1032.0" y1="119" x2="1032.0" y2="145" stroke="#1E1712" stroke-width="1.6"></line>
+<path d="M40,180 L560,180 L560,400 L40,400 Z" fill="#9DB28A" stroke="#1E1712" stroke-width="1.8"></path>
+<text x="58" y="202" text-anchor="start" font-size="15" fill="#8A1A12">የተባበረው ፡ የእስራኤል ፡ መንግሥት</text>
+<line x1="268.0" y1="180" x2="268.0" y2="400" stroke="#1E1712" stroke-width="1.3"></line>
+<text x="170" y="302" text-anchor="middle" font-size="20" fill="#1E1712">ዳዊት</text>
+<text x="170" y="322" text-anchor="middle" font-size="13" fill="#1E1712">… –970</text>
+<text x="475" y="302" text-anchor="middle" font-size="20" fill="#1E1712">ሰሎሞን</text>
+<text x="475" y="322" text-anchor="middle" font-size="13" fill="#1E1712">970–931</text>
+<text x="304.4" y="374" text-anchor="start" font-size="13" fill="#8A1A12">፨ ቤተ መቅደስ ተሠራ (በግምት 966)</text>
+<path d="M548,180 C585,180 595,145 630,145 L1560,145 L1560,255 L630,255 C600,255 585,290 548,290 Z" fill="#E2B54F" stroke="#1E1712" stroke-width="1.8"></path>
+<path d="M548,290 C585,290 600,325 630,325 L1560,325 L1560,435 L630,435 C595,435 585,400 548,400 Z" fill="#DE9479" stroke="#1E1712" stroke-width="1.8"></path>
+<text x="642" y="164" text-anchor="start" font-size="15" fill="#8A1A12">የእስራኤል ፡ መንግሥት (ሰሜን) ፡ ሰማርያ</text>
+<text x="642" y="344" text-anchor="start" font-size="15" fill="#8A1A12">የይሁዳ ፡ መንግሥት (ደቡብ) ፡ ኢየሩሳሌም</text>
+<line x1="724.0" y1="145" x2="724.0" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="731.6" y1="145" x2="731.6" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="906.4" y1="145" x2="906.4" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="914.0" y1="145" x2="914.0" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="997.6" y1="145" x2="997.6" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="1157.2" y1="145" x2="1157.2" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="1164.8" y1="145" x2="1164.8" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="1248.4" y1="145" x2="1248.4" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="1453.6" y1="145" x2="1453.6" y2="255" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="701.2" y1="325" x2="701.2" y2="435" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="716.4" y1="325" x2="716.4" y2="435" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="1028.0" y1="325" x2="1028.0" y2="435" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="1195.2" y1="325" x2="1195.2" y2="435" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="1248.4" y1="325" x2="1248.4" y2="435" stroke="#1E1712" stroke-width="1.2"></line>
+<line x1="1294.0" y1="325" x2="1294.0" y2="435" stroke="#1E1712" stroke-width="1.2"></line>
+<text x="644.2" y="206" text-anchor="middle" font-size="18" fill="#1E1712">ኢዮርብዓም</text>
+<text x="644.2" y="224" text-anchor="middle" font-size="13" fill="#3A2A1A">931–910</text>
+<text x="819.0" y="206" text-anchor="middle" font-size="18" fill="#1E1712">ባኦስ</text>
+<text x="819.0" y="224" text-anchor="middle" font-size="13" fill="#3A2A1A">909–886</text>
+<text x="955.8" y="206" text-anchor="middle" font-size="16" fill="#1E1712">ዘንበሪ</text>
+<text x="955.8" y="224" text-anchor="middle" font-size="13" fill="#3A2A1A">885–874</text>
+<text x="1099.4" y="206" text-anchor="middle" font-size="20" fill="#1E1712">አክዓብ</text>
+<text x="1099.4" y="224" text-anchor="middle" font-size="13" fill="#3A2A1A">874–853</text>
+<text x="1206.6" y="206" text-anchor="middle" font-size="16" fill="#1E1712">ኢዮራም</text>
+<text x="1206.6" y="224" text-anchor="middle" font-size="13" fill="#3A2A1A">852–841</text>
+<text x="1371.0" y="206" text-anchor="middle" font-size="18" fill="#1E1712">ኢዩ</text>
+<text x="1371.0" y="224" text-anchor="middle" font-size="13" fill="#3A2A1A">841–814</text>
+<text x="1506.8" y="206" text-anchor="middle" font-size="16" fill="#1E1712">ኢዮአካዝ</text>
+<text x="1506.8" y="224" text-anchor="middle" font-size="13" fill="#3A2A1A">814–798</text>
+<text x="632.8" y="386" text-anchor="middle" font-size="18" fill="#1E1712">ሮብዓም</text>
+<text x="632.8" y="404" text-anchor="middle" font-size="13" fill="#3A2A1A">931–913</text>
+<text x="872.2" y="386" text-anchor="middle" font-size="18" fill="#1E1712">አሳ</text>
+<text x="872.2" y="404" text-anchor="middle" font-size="13" fill="#3A2A1A">911–870</text>
+<text x="1133.6" y="386" text-anchor="middle" font-size="18" fill="#1E1712">ኢዮሣፍጥ</text>
+<text x="1133.6" y="404" text-anchor="middle" font-size="13" fill="#3A2A1A">870–848</text>
+<text x="1221.8000000000002" y="386" text-anchor="middle" font-size="13" fill="#1E1712">ኢዮራም</text>
+<text x="1271.2" y="386" text-anchor="middle" font-size="13" fill="#1E1712">ጎቶልያ</text>
+<text x="1427.0" y="386" text-anchor="middle" font-size="18" fill="#1E1712">ኢዮአስ</text>
+<text x="1427.0" y="404" text-anchor="middle" font-size="13" fill="#3A2A1A">835–796</text>
+<text x="642" y="296" text-anchor="start" font-size="14" fill="#8A1A12">931 ፡ መንግሥቱ ለሁለት ተከፈለ ።</text>
+<line x1="1104.0" y1="258" x2="1104.0" y2="322" stroke="#A52119" stroke-width="2" stroke-dasharray="5 4"></line>
+<text x="1096.0" y="296" text-anchor="end" font-size="13.5" fill="#8A1A12">ኢዮሣፍጥና አክዓብ ተባበሩ ፡ 1ኛ ነገ 22</text>
+<path d="M1157.2,258 C1177.2,290 1210.4,295 1210.4,322" fill="none" stroke="#1E1712" stroke-width="1.6"></path>
+<path d="M1161.2,258 C1181.2,290 1214.4,295 1214.4,322" fill="none" stroke="#1E1712" stroke-width="1.6"></path>
+<text x="1224.4" y="296" text-anchor="start" font-size="13.5" fill="#1E1712">ጎቶልያ (የአክዓብ ልጅ) ከይሁዳው ኢዮራም ጋር ተጋባች ፡ 2ኛ ነገ 8፥18</text>
+<rect x="40" y="470" width="1520" height="30" fill="#8FB0C4" stroke="#1E1712" stroke-width="1.8"></rect>
+<text x="58" y="491" text-anchor="start" font-size="16" fill="#1E1712">ኢትዮጵያ</text>
+<rect x="344.0" y="473" width="190.0" height="24" rx="12" fill="#C9DAE4" stroke="#1E1712" stroke-width="1.2" stroke-dasharray="5 3"></rect>
+<text x="384.0" y="490" text-anchor="start" font-size="13.5" fill="#1E1712">ንግሥተ ሳባ ፡ 1ኛ ነገ 10</text>
+<line x1="420.0" y1="470" x2="420.0" y2="402" stroke="#1E1712" stroke-width="1.5" stroke-dasharray="4 3"></line>
+<text x="426.0" y="454" text-anchor="start" font-size="13" fill="#8A1A12">ሰሎሞንን ጎበኘች (ቀኑ በግምት)</text>
+<path d="M800.0,556 C876.0,545 952.0,540 1028.0,540 L1560,540 L1560,572 L1028.0,572 C952.0,572 876.0,566 800.0,560 Z" fill="#B7B9C9" stroke="#1E1712" stroke-width="1.8"></path>
+<text x="1036.0" y="562" text-anchor="start" font-size="14" fill="#8A1A12">ሶርያ ፡ አራም ፡ ደማስቆ</text>
+<text x="1193.0" y="562" text-anchor="middle" font-size="14" fill="#1E1712">ወልደ አዴር</text>
+<text x="1246.8" y="562" text-anchor="start" font-size="14" fill="#1E1712">አዛሄል (በግምት 842)</text>
+<rect x="40" y="600" width="1520" height="40" fill="#DCC08A" stroke="#1E1712" stroke-width="1.8"></rect>
+<text x="58" y="626" text-anchor="start" font-size="15" fill="#8A1A12">ግብፅ ፡ 22ኛው ሥርወ መንግሥት</text>
+<line x1="610.0" y1="600" x2="610.0" y2="443" stroke="#1E1712" stroke-width="2"></line><path d="M604.0,449 L610.0,437 L616.0,449 Z" fill="#1E1712"></path>
+<text x="618.0" y="457" text-anchor="start" font-size="13.5" fill="#1E1712">ሺሻቅ ይሁዳን ወረረ ፡ 925 ፡ 1ኛ ነገ 14፥25</text>
+<path d="M700,748 C850,748 950,714 1100,702 L1560,690 L1560,748 Z" fill="#93A487" stroke="#1E1712" stroke-width="1.8"></path>
+<rect x="1111.6" y="712" width="266.0" height="28" rx="4" fill="#7C9070" stroke="#1E1712" stroke-width="1"></rect>
+<text x="1119.6" y="731" text-anchor="start" font-size="14" fill="#1E1712">ሰልምናሶር ፫ኛ (859–824)</text>
+<text x="1470" y="724" text-anchor="middle" font-size="18" fill="#8A1A12">አሦር</text>
+<line x1="1157.2" y1="704" x2="1157.2" y2="576" stroke="#1E1712" stroke-width="2"></line><path d="M1151.2,583 L1157.2,571 L1163.2,583 Z" fill="#1E1712"></path>
+<text x="1165.2" y="668" text-anchor="start" font-size="13.5" fill="#1E1712">ቃርቃር ጦርነት ፡ 853 — አክዓብና አራም አሦርን ገጠሙ</text>
+<text x="1256.4" y="692" text-anchor="start" font-size="13" fill="#8A1A12">የኢዩ ግብር ፡ 841 (ጥቁሩ ሐውልት)</text>
+<line x1="1157.2" y1="32" x2="1157.2" y2="748" stroke="#A52119" stroke-width="2" stroke-dasharray="6 5" opacity="0.6"></line><circle cx="1157.2" cy="36" r="4" fill="#A52119"></circle>
+<line x1="1248.4" y1="32" x2="1248.4" y2="748" stroke="#A52119" stroke-width="2" stroke-dasharray="6 5" opacity="0.6"></line><circle cx="1248.4" cy="36" r="4" fill="#A52119"></circle>
+</svg>
+<div style="position: absolute; left: 96px; top: 262px"><dc-import name="Figure" kind="king" tone="#1E1712" size="40" hint-size="40px,40px"></dc-import></div>
+<div style="position: absolute; left: 384px; top: 260px"><dc-import name="Figure" kind="king" tone="#1E1712" size="44" hint-size="44px,44px"></dc-import></div>
+<div style="position: absolute; left: 1005px; top: 181px"><dc-import name="Figure" kind="king" tone="#1E1712" size="38" hint-size="38px,38px"></dc-import></div>
+<div style="position: absolute; left: 1256px; top: 183px"><dc-import name="Figure" kind="king" tone="#1E1712" size="34" hint-size="34px,34px"></dc-import></div>
+<div style="position: absolute; left: 1036px; top: 361px"><dc-import name="Figure" kind="king" tone="#1E1712" size="38" hint-size="38px,38px"></dc-import></div>
+<div style="position: absolute; left: 1038px; top: 47px"><dc-import name="Figure" kind="prophet" tone="#1E1712" size="26" hint-size="26px,26px"></dc-import></div>
+<div style="position: absolute; left: 1205px; top: 47px"><dc-import name="Figure" kind="prophet" tone="#1E1712" size="26" hint-size="26px,26px"></dc-import></div>
+<div style="position: absolute; left: 356px; top: 474px"><dc-import name="Figure" kind="queen" tone="#1E1712" size="22" hint-size="22px,22px"></dc-import></div>
+<a href="Detail.dc.html" aria-label="አክዓብ — ዝርዝር ክፈት" style="position: absolute; left: 999px; top: 149px; width: 155px; height: 102px; border-radius: 8px; box-shadow: inset 0 0 0 2px #A52119"></a>
+</div>
+<svg width="100%" height="16" aria-hidden="true" style="display: block"><defs><pattern id="hg4" width="44" height="16" patternUnits="userSpaceOnUse"><rect width="44" height="16" fill="#E2B54F"></rect><path d="M0,8.0 C11,1 33,15 44,8.0" fill="none" stroke="#1E1712" stroke-width="7"></path><path d="M0,8.0 C11,1 33,15 44,8.0" fill="none" stroke="#A52119" stroke-width="3.6"></path><path d="M0,8.0 C11,15 33,1 44,8.0" fill="none" stroke="#1E1712" stroke-width="7"></path><path d="M0,8.0 C11,15 33,1 44,8.0" fill="none" stroke="#3F6B3A" stroke-width="3.6"></path><circle cx="22" cy="8.0" r="2.6" fill="#1E1712"></circle><circle cx="0" cy="8.0" r="2.6" fill="#1E1712"></circle><circle cx="44" cy="8.0" r="2.6" fill="#1E1712"></circle></pattern></defs><rect x="1" y="1" width="99.8%" height="14" fill="url(#hg4)" stroke="#1E1712" stroke-width="2"></rect></svg>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 13px; color: #1E1712">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 0; height: 16px; border-left: 2px dashed #A52119"></span>መልሕቅ ቀን (በውጭ መዝገብ የተረጋገጠ)</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 24px; height: 12px; border-radius: 6px; border: 1.2px dashed #1E1712; background: #B4C795"></span>ግምታዊ ዘመን</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 24px; height: 6px; box-sizing: border-box; border-top: 2px solid #1E1712; border-bottom: 2px solid #1E1712"></span>ጋብቻ</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 24px; height: 0; border-top: 2px dashed #A52119"></span>ኅብረት</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 24px; height: 2px; background: #1E1712"></span>ወረራ / ጦርነት</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="color: #8A1A12">ቀይ ቀለም</span> = ርዕስና ማስታወሻ (እንደ ብራና)</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: #3A2A1A">መላው ሰንጠረዥ — ከፍጥረት እስከ ሐዋርያት</span>
+<div style="display: flex; height: 32px; border: 2px solid #1E1712; overflow: hidden; font-family: 'Abyssinica SIL', serif; font-size: 14px; color: #1E1712">
+<div style="width: 7%; background: #E9D8B4; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden">ፍጥረት</div><div style="width: 8%; background: #DCC08A; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden">አባቶች</div><div style="width: 9%; background: #E9D8B4; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden">ዘፀአት</div><div style="width: 9%; background: #DCC08A; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden">መሳፍንት</div><div style="width: 24%; background: #DE9479; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; box-shadow: inset 0 0 0 3px #A52119">የነገሥታት ዘመን</div><div style="width: 9%; background: #DCC08A; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden">ምርኮ</div><div style="width: 10%; background: #E9D8B4; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden">በኪዳናት መካከል</div><div style="width: 12%; background: #8FB0C4; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden">ወንጌላት</div><div style="width: 12%; background: #B4C795; border-right: 1px solid #1E1712; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden">ሐዋርያት</div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

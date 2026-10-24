@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="am">
+<head>
+<meta charset="utf-8">
+<title>Figure</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: {{px}}; height: {{px}}; flex-shrink: 0">
+<svg width="100%" height="100%" viewBox="0 0 64 64" aria-hidden="true">
+<circle cx="32" cy="32" r="30.5" fill="#F3E6C8" stroke="{{tone}}" stroke-width="3"></circle>
+<circle cx="32" cy="24" r="17.5" fill="#E2B54F" stroke="#1E1712" stroke-width="1.3" display="{{halo}}"></circle>
+<path d="M20 33 C17 15 47 15 44 33 L47 47 L17 47 Z" fill="#E9E1CF" stroke="#BFB39B" stroke-width="1" display="{{hood}}"></path>
+<path d="M20 31 C18 14 46 14 44 31 L48 50 L16 50 Z" fill="{{veilColor}}" display="{{veil}}"></path>
+<path d="M11 58 C13 45 21 41 32 41 C43 41 51 45 53 58 C47 62 40 63.5 32 63.5 C24 63.5 17 62 11 58 Z" fill="{{tone}}" stroke="#1E1712" stroke-width="1.3"></path>
+<path d="M24 45 L28 49 L32 45 L36 49 L40 45" fill="none" stroke="#E2B44A" stroke-width="1.6" stroke-linejoin="round"></path>
+<rect x="28.5" y="35" width="7" height="7" fill="#6E4127"></rect>
+<path d="M21.5 22 C22 13 42 13 42.5 22 L42 26 L22 26 Z" fill="#21140C" display="{{hair}}"></path>
+<ellipse cx="32" cy="27" rx="10" ry="12" fill="#7A4B2E" stroke="#1E1712" stroke-width="1.2"></ellipse>
+<path d="M22.6 31 C23 40 28 43 32 43 C36 43 41 40 41.4 31 C38 34 35 35 32 35 C29 35 26 34 22.6 31 Z" fill="{{beardColor}}" display="{{beard}}"></path>
+<ellipse cx="27.6" cy="26" rx="3.4" ry="2.1" fill="#FFFFFF"></ellipse>
+<ellipse cx="36.4" cy="26" rx="3.4" ry="2.1" fill="#FFFFFF"></ellipse>
+<circle cx="27.8" cy="26" r="1.5" fill="#1A0F08"></circle>
+<circle cx="36.2" cy="26" r="1.5" fill="#1A0F08"></circle>
+<path d="M24 22.6 C25.5 21.6 29 21.6 30.5 22.6 M33.5 22.6 C35 21.6 38.5 21.6 40 22.6" fill="none" stroke="#1A0F08" stroke-width="1.1" stroke-linecap="round"></path>
+<path d="M32 27 L31 31.5 L33 31.5" fill="none" stroke="#4E2E1B" stroke-width="0.9" stroke-linecap="round"></path>
+<path d="M21 16 L23.5 7.5 L27.5 12.5 L32 5 L36.5 12.5 L40.5 7.5 L43 16 Z" fill="#D9A93A" stroke="#8A6418" stroke-width="1" stroke-linejoin="round" display="{{crown}}"></path>
+<circle cx="32" cy="12.5" r="1.4" fill="#8E2B1F" display="{{crown}}"></circle>
+</svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["king","queen","prophet"],"default":"king"},"tone":{"editor":"color","default":"#C99A3B","options":["#C99A3B","#8E2B1F","#3E6B4C","#6B5E52"]},"size":{"editor":"int","default":120,"min":20,"max":200},"$preview":{"width":120,"height":120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var kind = this.props.kind ?? 'king';
+    var tone = this.props.tone ?? '#C99A3B';
+    var size = parseInt(this.props.size ?? 120, 10) || 120;
+    var isRoyal = kind === 'king' || kind === 'queen';
+    return {
+      px: size + 'px',
+      tone: tone,
+      crown: isRoyal ? 'inline' : 'none',
+      hair: kind === 'king' ? 'inline' : 'none',
+      hood: kind === 'prophet' ? 'inline' : 'none',
+      halo: kind === 'prophet' ? 'inline' : 'none',
+      veil: kind === 'queen' ? 'inline' : 'none',
+      veilColor: '#3D2F22',
+      beard: kind === 'queen' ? 'none' : 'inline',
+      beardColor: kind === 'prophet' ? '#D6CDBB' : '#21140C'
+    };
+  }
+}
+</script>
+</body>
+</html>

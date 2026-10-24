@@ -1,0 +1,68 @@
+name: claude-review
+# Automated Claude review of task PRs into phase branches. The `review` job is a REQUIRED check on phase-*,
+# so auto-merge waits for it. Needs the repository secret ANTHROPIC_API_KEY (or a Claude OAuth token —
+# see docs/usage.md in anthropics/claude-code-action). Fork PRs are skipped: they get no secrets.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: ['phase-*']
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Reset verdict labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create claude:approved --color 2DA44E --force >/dev/null 2>&1 || true
+          gh label create claude:changes  --color D1242F --force >/dev/null 2>&1 || true
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --remove-label claude:approved --remove-label claude:changes || true
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            BRANCH: ${{ github.head_ref }}
+
+            You are reviewing one task PR for Bible Karta (public site repo). The PR branch is checked out.
+            1. The task id is the branch name after "task/". Read docs/tasks/<ID>.md and CLAUDE.md.
+            2. Review `gh pr diff` against the task's acceptance criteria, its `files` list and the CLAUDE.md
+               invariants — especially: no Bible text in this public repo; stored verse text never contains ፡
+               and is never transformed (፡ only via wordSeparators); references in scan numbering; years/x
+               only via dates.ts/timescale.ts; no invented biblical data; /dev, seed and fixture scripture
+               never in production; no secrets; no pull_request_target.
+            3. Also check for bugs, missing tests listed in the task, and security problems.
+            4. Post one summary with `gh pr comment` and inline comments for specific issues.
+            5. Finally apply exactly one label:
+               `gh pr edit ${{ github.event.pull_request.number }} --add-label claude:approved` if nothing blocks merge,
+               otherwise `gh pr edit ${{ github.event.pull_request.number }} --add-label claude:changes`.
+            Only post GitHub comments — don't submit review text as messages.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr edit:*)"
+
+      - name: Turn the verdict into a pass/fail check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels -q '.labels[].name')
+          echo "$LABELS"
+          grep -qx 'claude:approved' <<<"$LABELS" || { echo "Claude review did not approve."; exit 1; }

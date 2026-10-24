@@ -1,0 +1,60 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main, 'phase-*']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm validate
+      - name: Fetch scripture (real text for same-repo runs; fixtures for forks)
+        env:
+          # Empty on fork PRs, so the script falls back to scripture-fixtures/
+          SCRIPTURE_TOKEN: ${{ secrets.SCRIPTURE_TOKEN }}
+        run: scripts/fetch-scripture.sh
+      - run: pnpm verify:scripture
+      - name: Build (preview-style, seeded) — enforces size budgets
+        run: pnpm build
+        env:
+          BK_SEED: "1"
+      - name: Prove /dev and seed are excluded from production builds
+        # BK_ALLOW_FIXTURE_SCRIPTURE is a CI-only escape hatch (never set in Cloudflare) so fork PRs,
+        # which have no SCRIPTURE_TOKEN, can still run the production build check.
+        run: BK_ALLOW_FIXTURE_SCRIPTURE=1 pnpm build && test ! -d dist/dev
+
+  tools:
+    # Repo hygiene for a PUBLIC repo (required check). The site repo has no Python.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: No Bible text or secrets committed
+        run: |
+          # Fail if any JSON outside scripture-fixtures looks like a scripture book file
+          if grep -rl --include='*.json' '"chapters"' . --exclude-dir=node_modules --exclude-dir=scripture-fixtures --exclude-dir=.scripture; then
+            echo "::error::Scripture-like JSON found in the public repo"; exit 1
+          fi
+          # Fail if anything looks like a committed GitHub token
+          if grep -rIlE 'gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}' . --exclude-dir=node_modules --exclude-dir=.git; then
+            echo "::error::Possible GitHub token committed"; exit 1
+          fi
