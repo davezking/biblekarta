@@ -1,7 +1,7 @@
 name: claude-review
 # Automated Claude review of task PRs into phase branches. The `review` job is a REQUIRED check on phase-*,
-# so auto-merge waits for it. Needs the repository secret ANTHROPIC_API_KEY (or a Claude OAuth token —
-# see docs/usage.md in anthropics/claude-code-action). Fork PRs are skipped: they get no secrets.
+# so auto-merge waits for it. Needs the repository secret CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`;
+# it uses the owner's Claude subscription, not API credits). Fork PRs are skipped: they get no secrets.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -37,7 +37,7 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}

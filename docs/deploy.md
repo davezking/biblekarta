@@ -32,7 +32,7 @@ Settings → Builds → **Build watch paths**: include `*`, exclude `docs/**` an
 `BK_ALLOW_FIXTURE_SCRIPTURE` is a CI-only escape hatch. **Never set it in Cloudflare**, or production could ship the fixture test book.
 
 ## 5. GitHub repo settings (`biblekarta`)
-- **Actions secrets:** `ANTHROPIC_API_KEY` (for the Claude PR review) and `SCRIPTURE_TOKEN` (the same PAT as above).
+- **Actions secrets:** `CLAUDE_CODE_OAUTH_TOKEN` (for the Claude PR review; from `claude setup-token`, uses your Claude subscription) and `SCRIPTURE_TOKEN` (the same PAT as above).
 - **Labels:**
   ```
   gh label create review:auto  --color 0E8A16 --description "Claude review, auto-merge when green"
