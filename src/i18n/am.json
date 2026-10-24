@@ -5,5 +5,8 @@
   "date.approx": "በግምት {date}",
   "date.disputed": "{date} (አከራካሪ)",
   "date.tbd": "ያልተወሰነ",
-  "axis.traditional.prefix": "ከፍጥረት"
+  "axis.traditional.prefix": "ከፍጥረት",
+  "scripture.chapter": "ምዕራፍ {n}",
+  "scripture.rule.pending-review": "የ፡ ደንብ ገና አልጸደቀም (ቁ. {version})",
+  "scripture.rule.approved": "የ፡ ደንብ ጸድቋል (ቁ. {version})"
 }

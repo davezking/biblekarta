@@ -1,0 +1,45 @@
+---
+import Base from '../../../layouts/Base.astro';
+import RuleBadge from '../../../components/scripture/RuleBadge.astro';
+import { loadVerifiedBooks } from '../../../build/scripture-books';
+import { resolveScriptureEnv } from '../../../build/verify-scripture';
+
+const books = await loadVerifiedBooks();
+const env = await resolveScriptureEnv();
+---
+
+<Base title="Scripture viewer">
+  <meta slot="head" name="robots" content="noindex" />
+  <main class="page">
+    <h1 lang="en">Scripture viewer</h1>
+    <RuleBadge />
+    <p lang="en">
+      Preview only. {books.length} verified books from <code>{env.SCRIPTURE_DIR}</code>(
+      {env.BK_SCRIPTURE}, {env.SCRIPTURE_VERSION}), in the scan's order.
+      <a href="/dev/scripture/separator-samples/">Separator samples</a>
+    </p>
+    <ol class="books">
+      {books.map((b) => (
+        <li>
+          <a href={`/dev/scripture/${b.id}/`} lang="am" class="ms">
+            {b.name_am}
+          </a>
+        </li>
+      ))}
+    </ol>
+  </main>
+</Base>
+
+<style>
+  .page {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+  }
+  .books a {
+    display: inline-block;
+    min-height: 44px;
+    line-height: 44px;
+    color: var(--ink);
+  }
+</style>
