@@ -1,0 +1,24 @@
+{
+  "id": "test-king",
+  "slug": "test-king",
+  "name_am": "የሙከራ ንጉሥ",
+  "name_en": "Test King",
+  "aliases": [],
+  "figure_kind": "king",
+  "importance": 3,
+  "stream_id": "no-such-stream",
+  "birth_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "refs": [
+    {
+      "book_id": "gen",
+      "chapter": 1,
+      "verse_start": 1,
+      "verse_end": 2
+    }
+  ],
+  "fixture": true
+}

@@ -1,0 +1,17 @@
+{
+  "id": "test-event",
+  "slug": "test-event",
+  "title_am": "የሙከራ ክስተት",
+  "title_en": "Test event",
+  "stream_id": "test-kingdom",
+  "type": "point",
+  "date_traditional": {
+    "start": 4700,
+    "certainty": "tradition_only",
+    "method": "traditional",
+    "source_id": "test-source"
+  },
+  "importance": 2,
+  "refs": [],
+  "fixture": true
+}

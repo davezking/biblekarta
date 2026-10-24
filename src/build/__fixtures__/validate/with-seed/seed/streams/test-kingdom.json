@@ -1,0 +1,18 @@
+{
+  "id": "test-kingdom",
+  "slug": "seed-copy",
+  "name_am": "የሙከራ መንግሥት",
+  "name_en": "Seed copy (ignored)",
+  "kind": "polity",
+  "fill_color": "#9DB28A",
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -900
+      },
+      "width": 3
+    }
+  ],
+  "lane_order": 1,
+  "fixture": true
+}

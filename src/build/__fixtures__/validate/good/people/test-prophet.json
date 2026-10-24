@@ -1,0 +1,24 @@
+{
+  "id": "test-prophet",
+  "slug": "test-prophet",
+  "name_am": "የሙከራ ነቢይ",
+  "name_en": "Test Prophet",
+  "aliases": [],
+  "figure_kind": "prophet",
+  "importance": 3,
+  "stream_id": "test-ribbon",
+  "birth_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "refs": [
+    {
+      "book_id": "gen",
+      "chapter": 1,
+      "verse_start": 1,
+      "verse_end": 2
+    }
+  ],
+  "fixture": true
+}

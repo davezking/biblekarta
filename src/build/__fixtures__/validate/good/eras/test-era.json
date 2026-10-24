@@ -1,0 +1,16 @@
+{
+  "id": "test-era",
+  "slug": "test-era",
+  "name_am": "የሙከራ ዘመን",
+  "name_en": "Test era",
+  "start": {
+    "scholarly": -900
+  },
+  "end": {
+    "scholarly": -700
+  },
+  "certainty": "approximate",
+  "status": "live",
+  "order": 1,
+  "fixture": true
+}

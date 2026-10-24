@@ -1,0 +1,15 @@
+{
+  "id": "test-rel",
+  "person_a_id": "test-prophet",
+  "person_b_id": "test-king",
+  "type": "prophesied_to",
+  "label_am": "የሙከራ ግንኙነት",
+  "refs": [
+    {
+      "book_id": "gen",
+      "chapter": 1,
+      "verse_start": 1
+    }
+  ],
+  "fixture": true
+}
