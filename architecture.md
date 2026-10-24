@@ -15,10 +15,12 @@
 | Change | Driver | Effect |
 |---|---|---|
 | The scripture source is **the Society's HTML Bible** (`am_new.zip`, 31,102 verses), with the **scan as the authority** | PRD v5.4 | The OCR pipeline is gone. Phase 1 becomes: parse → auto-clean → flag → **Excel workbook** → apply fixes → freeze. OCR is now only an optional helper for missing passages (e.g. Gen 31:33–55). |
-| **Stored text keeps the HTML's spaces.** ፡ is generated at display time by one rule. | PRD v5.4 | This is a new pure function, `wordSeparators()`. The `CLAUDE.md` invariant changes from "keep ፡ as stored" to "never store ፡". |
+| **Stored text keeps the HTML's words, separated by single spaces.** ፡ is generated at display time by one rule. | PRD v5.4; owner, Oct 2026 | This is a new pure function, `wordSeparators()`. The `CLAUDE.md` invariant changes from "keep ፡ as stored" to "never store ፡". Runs of whitespace in the HTML (e.g. Job's poetic line breaks) become one space through a logged, reversible cleaning rule; words never change. |
 | A **versification map** (HTML ref → scan ref) is added | PRD v5.4 | The HTML uses KJV numbering; every reference in the app uses the scan's numbering. |
 | Verses get a **`footnote`** field | PRD v5.4 | Edition footnotes are moved out of the verse text. Whether they are displayed is an open question (R6). |
-| **Targeted proofreading:** the 436 flagged verses, 31 anchor/interval checks, and a 2–5% spot-check with a 0.5% escalation rule. A second person reviews every change. | PRD v5.4 | This replaces checking all 31k verses. The estimate drops from 8–14 weeks to 3–5. |
+| **Verse ranges:** a verse may carry **`to`** (e.g. `{"n":14,"to":15,"t":"…"}`) | Owner, Oct 2026 | This edition prints some verses together as one range (279 verses, mostly NT, where the HTML has only "-"). Proofreaders confirm each with the **Join** decision; the range is stored once and shown as "፲፬–፲፭". A reference to any verse in the range (e.g. Heb 2:15) opens the range. |
+| **"!" is allowed punctuation** | Owner, Oct 2026 | The exclamation mark (ወዮ!, 261 uses) is stored like ። ፣ ፤ ፥ ?, and `wordSeparators()` never puts ፡ next to it. |
+| **Targeted proofreading:** the flagged verses (436 in round 1, plus 279 joined and 12 with unexpected characters added in Oct 2026), 31 anchor/interval checks, and a 2–5% spot-check with a 0.5% escalation rule. A second person reviews every change. | PRD v5.4 | This replaces checking all 31k verses. The estimate drops from 8–14 weeks to 3–5. |
 | **Public code repo + private scripture repo** | Your choice | Free branch protection and CODEOWNERS give **real FR-29 enforcement at merge time**. There's real GitHub auto-merge, and Actions minutes are unlimited. The promotion gate and the `production` branch are removed. |
 | Derived dates must follow **this edition's numbers** (Septuagint-type before Abraham, Hebrew-type from the Exodus) | PRD v5.4 appendix | Adds a derived-date calculator in Phase 3. |
 
@@ -123,7 +125,7 @@ flowchart LR
 
 **Verse display path**
 1. Stored verse text (spaces, as in the HTML after correction).
-2. → `wordSeparators(text)`: one ፡ between words, none next to ። ፣ ፤ ፥ ?.
+2. → `wordSeparators(text)`: one ፡ between words, none next to ። ፣ ፤ ፥ ? !.
 3. → rendered as a plain text node.
 
 The rule is reviewer-approved against sample scan pages (R5). Checksums cover the stored text, and the rule has its own golden tests.
@@ -163,9 +165,9 @@ erDiagram
 
 | File | Shape / rule |
 |---|---|
-| `scripture/books/<id>.json` | `{"book","edition":"BSE-1954-html+scan","status":"verified","chapters":[{"n","verses":[{"n","t","footnote?"}]}]}`. `n` is the **scan** number. `t` holds the words separated by single spaces, as corrected; **it never contains ፡**. |
-| `scripture/checksums.json` | SHA-256 of each verse's `t`, keyed `gen.1.1` |
-| `scripture/verse-counts.json` | Per-chapter counts **in the scan's numbering** |
+| `scripture/books/<id>.json` | `{"book","edition":"BSE-1954-html+scan","status":"verified","chapters":[{"n","verses":[{"n","to?","t","footnote?"}]}]}`. `n` is the **scan** number. `to` (optional) is the last verse of a range printed as one (n–to); the verses inside a range have no entry of their own. `t` holds the words separated by single spaces, as corrected; **it never contains ፡**. |
+| `scripture/checksums.json` | SHA-256 of each verse's `t`, keyed `gen.1.1` (a range by its first verse) |
+| `scripture/verse-counts.json` | Per-chapter counts **in the scan's numbering**; every number in a range counts |
 | `scripture/versification.json` | `[{html: "job.40.24", scan: ["job.40.24", …, "job.40.32"], kind: "split"\|"merge"\|"renumber", note}]`. Used by import/finalize, and to translate any HTML-numbered reference. |
 | `scripture/books-meta.json` | id, scan `name_am`, HTML `name_am` (e.g. ሚልክያ), name_en, testament, scan `order_66`, HTML order, `abbr_am` (once approved) |
 | `cleaning-log.jsonl` | One line per automatic change: `{ref, rule, before, after}`. Replaying the log in reverse restores the raw HTML text. |
@@ -173,7 +175,7 @@ erDiagram
 | `provenance/<id>.json` | rounds, reviewers, the flags resolved, the spot-check size and error rate, escalations, date |
 
 **Text rules (validation, enforced in `bk finalize`, `bk verify` and the site build)**
-- Allowed characters: Ethiopic fidel, and the punctuation ። ፣ ፤ ፥ ? plus single spaces. **No ፡ in stored text.**
+- Allowed characters: Ethiopic fidel, and the punctuation ። ፣ ፤ ፥ ? ! plus single spaces. **No ፡ in stored text.**
 - No Latin letters.
 - Digits only in the reviewed allowlist (e.g. `1sa.13.21`).
 - No leading or trailing whitespace, no double spaces, NFC (fail rather than silently change).
