@@ -1,0 +1,9 @@
+{
+  "_comment": "axis.traditional.prefix is pending reviewer approval (PRD risk #3). Templates: {year} is a number or range, {date} a formatted date.",
+  "date.bc": "{year} BC",
+  "date.ad": "AD {year}",
+  "date.approx": "c. {date}",
+  "date.disputed": "{date} (disputed)",
+  "date.tbd": "TBD",
+  "axis.traditional.prefix": "AA"
+}
