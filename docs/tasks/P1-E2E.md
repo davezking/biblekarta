@@ -24,7 +24,7 @@ files: [e2e/phase-1/, playwright.config.ts, ../biblekarta-scripture/tools/tests/
 ## Do this
 1. **Site (`e2e/phase-1/`):**
    - `playground.spec.ts`: Ge'ez 950 → ፱፻፶; date −852 → "853 ዓ.ዓ."; ሐዋርያት → ሀዋርያት. (demo step 1)
-   - `scripture-viewer.spec.ts`: `/dev/scripture/<book>/` renders chapters with Ge'ez numbers. For 3 verses, `textContent === wordSeparators(t)` from the JSON, and no ፡ appears next to ። ፣ ፤ ፥ ?. Use the real book when `BK_SCRIPTURE=real`, otherwise the fixture book. (demo steps 6–7)
+   - `scripture-viewer.spec.ts`: `/dev/scripture/<book>/` renders chapters with Ge'ez numbers. For 3 verses, `textContent === wordSeparators(t)` from the JSON, and no ፡ appears next to ። ፣ ፤ ፥ ? !. Use the real book when `BK_SCRIPTURE=real`, otherwise the fixture book. (demo steps 6–7)
    - `prod-excludes-dev.spec.ts`: a production-style build has no `/dev/` routes, and refuses fixture scripture. (demo step 8)
    - `e2e/phase-1/README.md`: map each demo step to its test.
 2. **Scripture repo (`tools/tests/test_pipeline_e2e.py`).** A golden pipeline test on a small real fixture: 3 chapters of HTML in `tools/tests/fixtures/pipeline/`, chosen to include an empty verse, a stray marker, a footnote and a merged verse. It runs:
