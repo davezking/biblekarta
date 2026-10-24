@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Source PRD** | prd-bible-chronology-chart_final.md (**v5.4**: the base text is the Society's HTML Bible) |
+| **Source PRD** | [`docs/prd-bible-chronology-chart_final.md`](docs/prd-bible-chronology-chart_final.md) (**v5.4**: the base text is the Society's HTML Bible) |
 | **Stack** | Astro (static) + React chart island, on Cloudflare Pages |
 | **Repos** | **`biblekarta` (public):** code + content. **`biblekarta-scripture` (private):** Bible text + text tools. |
 | **Builder / reviewer** | solo, with Claude Code; you review your own phases |
