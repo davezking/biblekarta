@@ -1,7 +1,11 @@
 name: e2e
+# Playwright (desktop + mobile) on PRs and pushes to main and phase-*. `pull_request` only, never
+# `pull_request_target`: fork PRs get no secrets, so they run against scripture-fixtures/.
 on:
+  pull_request:
+    branches: [main, 'phase-*']
   push:
-    branches: ['phase-*']
+    branches: [main, 'phase-*']
   workflow_dispatch:
 
 concurrency:

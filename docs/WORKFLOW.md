@@ -33,6 +33,7 @@ Scripture tasks don't use phase branches: they go `task/<ID>` → `main` in the 
 ## 3. Review and merge
 - **Site, `review:auto`:** the PR auto-merges into `phase-<N>` once `web`, `tools` and `review` (Claude) pass. If Claude labels it `claude:changes`, fix it and push; auto-merge stays armed.
 - **Scripture, `review:auto`:** `scripts/merge-when-green.sh <PR>` (in the scripture repo) waits for CI and the Claude label, then merges. Auto-merge isn't available on private repos on GitHub Free.
+- **E2E:** the `e2e` workflow (Playwright, desktop and mobile) runs on every PR into `main` or `phase-<N>` and on pushes to them, so a phase's `P<N>-E2E` specs run on each task PR, not only at the end.
 - **`review:opus` (either repo):** run `/model opus` and ask: "Review PR #<n> against docs/tasks/<ID>.md and CLAUDE.md". Fix the findings, then merge: `gh pr merge <n> --squash --delete-branch`.
 
 ## 4. Proofreading rounds (human work, alongside the build)
