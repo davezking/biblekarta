@@ -8,9 +8,14 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+/** The edition the private repo stamps on every finalized book (scripture_io.EDITION). */
+export const EDITION = 'BSE-1954-html+scan';
+
 export interface BookFile {
   book: string;
   status?: string;
+  edition?: string;
+  name_am?: string; // the fixture test book only; real books are named by books-meta.json
   chapters: { n: number; verses: { n: number; to?: number; t: string; footnote?: string }[] }[];
 }
 
@@ -106,9 +111,7 @@ export async function verifyScripture(
   );
   const problems: string[] = [];
   const books: string[] = [];
-  const files = await listBooks(dir);
-  for (const file of files) {
-    const book = JSON.parse(await readFile(join(dir, 'books', file), 'utf8')) as BookFile;
+  for (const { file, book } of await readBookFiles(dir)) {
     const id = file.replace(/\.json$/, '');
     if (book.status !== 'verified') continue; // never copied, so never published
     books.push(id);
@@ -141,13 +144,29 @@ export async function verifyScripture(
   return { problems, books };
 }
 
-async function listBooks(dir: string): Promise<string[]> {
+export interface BookFileEntry {
+  file: string; // e.g. "1ki.json"
+  path: string;
+  bytes: Buffer; // the file exactly as stored (copied byte-for-byte)
+  book: BookFile;
+}
+
+/** Every $dir/books/*.json, sorted by file name ([] when there is no books/ folder). */
+export async function readBookFiles(dir: string): Promise<BookFileEntry[]> {
+  let files: string[];
   try {
-    return (await readdir(join(dir, 'books'))).filter((f) => f.endsWith('.json')).sort();
+    files = (await readdir(join(dir, 'books'))).filter((f) => f.endsWith('.json')).sort();
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
     throw err;
   }
+  const out: BookFileEntry[] = [];
+  for (const file of files) {
+    const path = join(dir, 'books', file);
+    const bytes = await readFile(path);
+    out.push({ file, path, bytes, book: JSON.parse(bytes.toString('utf8')) as BookFile });
+  }
+  return out;
 }
 
 function sortKeys(o: Record<string, number>): [string, number][] {

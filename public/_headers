@@ -1,0 +1,10 @@
+# Cloudflare Pages response headers (architecture §6). The CSP is report-only until the
+# security review (P5-S2-T4) enforces it, so it can't break the site before then; /admin/ gets
+# its own minimal policy when the CMS arrives (Phase 3).
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'

@@ -38,7 +38,10 @@ Settings → Builds → **Build watch paths**: include `*`, exclude `docs/**` an
 
 The choice is written to `.scripture.env`, which `pnpm verify:scripture` and `pnpm build` read. The build copies the **verified** books byte-for-byte to `/data/scripture/<id>.json` and re-checks every verse against `checksums.json`.
 
-**Production guard:** a production build (no `BK_SEED=1`) **fails** while the scripture is the fixture book. This is on purpose, so the live site can never show the test book. Until the first text release exists, production deploys of `main` therefore fail; previews (which set `BK_SEED=1`) work.
+**Production guard** (`src/build/copy-scripture.ts`): a production build (no `BK_SEED=1`) never ships the fixture test book.
+- **No text release yet** (`scripture.lock` is `none`): it builds and publishes **no** scripture, so verses show "በዝግጅት ላይ".
+- **A release is pinned but only the fixtures were fetched** (e.g. `SCRIPTURE_TOKEN` missing): the build **fails**.
+- **Real text:** every published book must be the Society's edition (`BSE-1954-html+scan`), and the whole folder must pass `verify:scripture` (checksums, verse counts, text rules) before anything is copied.
 
 **Releasing a new text version:**
 1. In `biblekarta-scripture`, after `bk finalize` and a green `bk verify`: `git tag text-v<N> && git push origin text-v<N>`.

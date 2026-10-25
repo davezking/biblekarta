@@ -212,7 +212,7 @@ erDiagram
 - **Readers:** no accounts, no cookies; a static, read-only site.
 - **Editors:** GitHub login through Decap; they are collaborators with write access to `biblekarta`. Scripture is not a CMS collection, and editors have **no access** to the scripture repo.
 - **Two-person review (FR-29), enforced at merge time:**
-  - **Ruleset on `main`:** pull request required; **code-owner review required**; required checks `ci/web` and `ci/tools`; no force push; no bypass.
+  - **Rulesets on `main`:** `main-checks` (pull request required; required checks `web` and `tools`; no force push; **no bypass**) and `main-review` (**code-owner review required**; the admin role may bypass it only through a pull request). The owner is also the content reviewer, so editors' content PRs get two people, but the owner's own edits to code-owned paths get one; add a second code owner when one exists (`docs/repo-rules.md`).
   - **`CODEOWNERS`:** `/content/` → the reviewer(s) + owner. `/scripture.lock`, `/.github/`, `/workers/`, `/public/admin/`, `/src/build/verify-scripture.ts` → owner.
   - A code-owner review must come from someone other than the PR author, so every content change needs a second person. Your own code PRs (phase → `main`) touch no code-owned content and merge after CI.
   - **Ruleset on `phase-*`:** pull request required; required checks `ci/web`, `ci/tools` and `claude-review`; auto-merge allowed.
@@ -255,6 +255,8 @@ erDiagram
 
 When a phase is approved, merge `phase-<N>` → `main` and tag `v0.<N>-phase<N>`.
 
+**Phase 1 exception.** Phase 1's task PRs were merged straight into `main` (there was no `phase-1` branch), so its preview, e2e and Claude review ran on `main` PRs instead. From Phase 2 on, the owner creates `phase-<N>` at phase start and task PRs target it.
+
 **Scripture repo (private).** Tasks tagged `repo: scripture` run there. The flow is `task/<ID>` → PR → `main`. GitHub Free has no auto-merge on private repos, so `scripts/merge-when-green.sh` merges after CI and the Claude review. Frozen releases are tagged `text-v<N>`. The site picks up a release through a `scripture.lock` PR.
 
 **Preview deployments (Cloudflare Pages Git integration, public repo)**
@@ -273,8 +275,8 @@ When a phase is approved, merge `phase-<N>` → `main` and tag `v0.<N>-phase<N>`
 **CI**
 - **Public repo:**
   - `ci.yml` (PRs and `main`): lint, type check, unit tests, `validate`, `verify:scripture`, build. It runs twice: seeded, and production, which proves `/dev` is excluded.
-  - `e2e.yml`: Playwright on pushes to `phase-*`.
-  - `claude-review.yml`: reviews PRs into `phase-*` and sets a pass/fail check (required on `phase-*`).
+  - `e2e.yml`: Playwright on PRs into, and pushes to, `main` and `phase-*`.
+  - `claude-review.yml`: reviews PRs into `main` and `phase-*` and sets a pass/fail check (required on `phase-*`).
 - **Scripture repo:** `ci.yml` runs ruff, pytest and `bk verify`. `claude-review.yml` reviews PRs into `main`.
 
 ## 9. Non-Functional Requirements

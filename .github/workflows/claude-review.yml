@@ -1,12 +1,12 @@
 name: claude-review
-# Automated Claude review of task PRs into phase branches. The `review` job is a REQUIRED check on phase-*,
-# so auto-merge waits for it. Needs the repository secret CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`;
+# Automated Claude review of task PRs into phase branches and main. The `review` job is a REQUIRED check on
+# phase-*, so auto-merge waits for it. Needs the repository secret CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`;
 # it uses the owner's Claude subscription, not API credits). Fork PRs are skipped: they get no secrets.
 # Until the secret is set, the job skips the review with a notice and passes, instead of failing every PR.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: ['phase-*']
+    branches: [main, 'phase-*']
 
 concurrency:
   group: claude-review-${{ github.event.pull_request.number }}
@@ -55,7 +55,8 @@ jobs:
             BRANCH: ${{ github.head_ref }}
 
             You are reviewing one task PR for Bible Karta (public site repo). The PR branch is checked out.
-            1. The task id is the branch name after "task/". Read docs/tasks/<ID>.md and CLAUDE.md.
+            1. The task id is the branch name after "task/", or else the PR title before its first ":" (e.g. P1-S3-T8).
+               Read docs/tasks/<ID>.md and CLAUDE.md.
             2. Review `gh pr diff` against the task's acceptance criteria, its `files` list and the CLAUDE.md
                invariants — especially: no Bible text in this public repo; stored verse text never contains ፡
                and is never transformed (፡ only via wordSeparators); references in scan numbering; years/x
