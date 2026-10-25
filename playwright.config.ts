@@ -17,7 +17,9 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: 'pnpm build && pnpm preview --port 4321',
+    // --ignore-lock keeps `astro preview` in the foreground (Astro 7 backgrounds it when an AI
+    // agent runs it), so Playwright owns the server and stops it afterwards.
+    command: 'pnpm build && pnpm preview --port 4321 --ignore-lock',
     url: 'http://localhost:4321',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

@@ -5,7 +5,7 @@ A free, non-profit web app ([biblekarta.com](https://biblekarta.com)) that shows
 This repo is **public** and never contains Bible text. The text lives in the private `biblekarta-scripture` repo; without access, the site builds against `scripture-fixtures/` (a non-scriptural test book).
 
 ## Setup
-Node 22 and pnpm (see `.nvmrc` and `packageManager`).
+Node 22.23.4 or newer (Astro 7 refuses older 22.x) and pnpm (see `.nvmrc`, `engines` and `packageManager`).
 
 ```
 pnpm i

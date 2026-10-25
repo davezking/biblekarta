@@ -9,7 +9,7 @@ Bible Karta (biblekarta.com, የመጽሐፍ ቅዱስ ካርታ) is a free, non
 - **Never copy Bible text into this repo,** not even in tests, fixtures, issues or PR descriptions. `scripture-fixtures/` holds a non-scriptural test book only.
 
 ## Stack
-- Astro 5 (static) + a React 19 chart island + SVG + d3-zoom. TypeScript strict. pnpm. Node 22.
+- Astro 7 (static) + a React 19 chart island + SVG + d3-zoom. TypeScript strict. pnpm. Node 22 (≥ 22.23.4, which Astro 7 requires).
 - Content: JSON, one file per entry, Zod (`src/lib/core/schema.ts`). Decap CMS at `/admin`.
 - Tests: Vitest and Playwright (install the browser once: `pnpm exec playwright install chromium`).
 - Hosting: Cloudflare Pages Git integration. Production = `main`; there's a preview per branch.

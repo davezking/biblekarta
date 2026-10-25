@@ -52,7 +52,7 @@ Each item shows two dates: the Ethiopian traditional date and the scholarly date
 
 | Layer | Choice | Why it fits Bible Karta |
 |---|---|---|
-| Site | **Astro 5, static output** | A static page per person, event and era, so shared links and SEO work. The list view (DR-13) is plain HTML. Pages ship almost no JS apart from the chart island. |
+| Site | **Astro 7, static output** | A static page per person, event and era, so shared links and SEO work. The list view (DR-13) is plain HTML. Pages ship almost no JS apart from the chart island. |
 | Chart | **React 19 island + SVG + d3-zoom** | Crisp, selectable Ethiopic text. A Canvas fallback is kept for the stream layer only (PRD risk #9). |
 | Languages | **TypeScript strict** for the site; **Python 3.12 + uv** for the text tools | Python has the best HTML-parsing and Excel (openpyxl) tooling. |
 | Content | **JSON, one file per entry, validated by Zod** | Fits Decap. One schema definition is used everywhere. |
