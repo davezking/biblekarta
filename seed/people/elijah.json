@@ -1,0 +1,13 @@
+{
+  "id": "elijah",
+  "slug": "elijah",
+  "name_am": "ኤልያስ",
+  "name_en": "Elijah",
+  "aliases": [],
+  "figure_kind": "prophet",
+  "importance": 4,
+  "stream_id": "prophets",
+  "refs": [],
+  "canon": "shared",
+  "fixture": true
+}

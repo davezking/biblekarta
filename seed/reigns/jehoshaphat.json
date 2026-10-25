@@ -1,0 +1,34 @@
+{
+  "id": "jehoshaphat",
+  "person_id": "jehoshaphat",
+  "stream_id": "judah",
+  "coregency_flag": false,
+  "start_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "end_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "start_scholarly": {
+    "start": -869,
+    "certainty": "exact",
+    "method": "derived",
+    "anchor_id": "qarqar-853",
+    "anchor_value_used": -852,
+    "source_id": "thiele"
+  },
+  "end_scholarly": {
+    "start": -847,
+    "certainty": "exact",
+    "method": "derived",
+    "anchor_id": "qarqar-853",
+    "anchor_value_used": -852,
+    "source_id": "thiele"
+  },
+  "canon": "shared",
+  "fixture": true
+}

@@ -1,0 +1,19 @@
+{
+  "id": "ethiopia",
+  "slug": "ethiopia",
+  "name_am": "ኢትዮጵያ",
+  "name_en": "Ethiopia",
+  "kind": "lane",
+  "fill_color": "#8FB0C4",
+  "lane_order": 6,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -999
+      },
+      "width": 1
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

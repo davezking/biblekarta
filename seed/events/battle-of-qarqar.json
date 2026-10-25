@@ -1,0 +1,24 @@
+{
+  "id": "battle-of-qarqar",
+  "slug": "battle-of-qarqar",
+  "title_am": "ቃርቃር ጦርነት",
+  "title_en": "Battle of Qarqar",
+  "stream_id": "assyria",
+  "type": "point",
+  "importance": 4,
+  "date_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "date_scholarly": {
+    "start": -852,
+    "certainty": "exact",
+    "method": "anchor",
+    "anchor_id": "qarqar-853"
+  },
+  "refs": [],
+  "summary_am": "አክዓብና አራም አሦርን ገጠሙ",
+  "canon": "shared",
+  "fixture": true
+}

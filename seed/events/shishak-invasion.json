@@ -1,0 +1,31 @@
+{
+  "id": "shishak-invasion",
+  "slug": "shishak-invasion",
+  "title_am": "ሺሻቅ ይሁዳን ወረረ",
+  "title_en": "Shishak invades Judah",
+  "stream_id": "egypt",
+  "type": "point",
+  "importance": 3,
+  "date_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "date_scholarly": {
+    "start": -924,
+    "certainty": "exact",
+    "method": "derived",
+    "anchor_id": "qarqar-853",
+    "anchor_value_used": -852,
+    "source_id": "thiele"
+  },
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 14,
+      "verse_start": 25
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

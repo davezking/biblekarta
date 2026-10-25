@@ -1,0 +1,13 @@
+{
+  "id": "elisha",
+  "slug": "elisha",
+  "name_am": "ኤልሳዕ",
+  "name_en": "Elisha",
+  "aliases": [],
+  "figure_kind": "prophet",
+  "importance": 3,
+  "stream_id": "prophets",
+  "refs": [],
+  "canon": "shared",
+  "fixture": true
+}

@@ -1,0 +1,19 @@
+{
+  "id": "egypt",
+  "slug": "egypt",
+  "name_am": "ግብፅ ፡ 22ኛው ሥርወ መንግሥት",
+  "name_en": "Egypt (22nd dynasty)",
+  "kind": "lane",
+  "fill_color": "#DCC08A",
+  "lane_order": 8,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -999
+      },
+      "width": 1
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

@@ -1,0 +1,13 @@
+{
+  "id": "omri",
+  "slug": "omri",
+  "name_am": "ዘንበሪ",
+  "name_en": "Omri",
+  "aliases": [],
+  "figure_kind": "king",
+  "importance": 3,
+  "stream_id": "israel",
+  "refs": [],
+  "canon": "shared",
+  "fixture": true
+}

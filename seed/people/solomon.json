@@ -1,0 +1,13 @@
+{
+  "id": "solomon",
+  "slug": "solomon",
+  "name_am": "ሰሎሞን",
+  "name_en": "Solomon",
+  "aliases": [],
+  "figure_kind": "king",
+  "importance": 5,
+  "stream_id": "united",
+  "refs": [],
+  "canon": "shared",
+  "fixture": true
+}

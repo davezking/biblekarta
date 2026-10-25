@@ -16,6 +16,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "validate": "tsx src/build/validate-content.ts",
+    "seed:check": "pnpm validate --dir seed",
     "verify:scripture": "tsx src/build/verify-scripture.ts",
     "fonts:subset": "node scripts/subset-fonts.mjs"
   },

@@ -1,0 +1,17 @@
+{
+  "id": "sheba-visited-solomon",
+  "person_a_id": "queen-of-sheba",
+  "person_b_id": "solomon",
+  "type": "allied",
+  "label_am": "ሰሎሞንን ጎበኘች (ቀኑ በግምት)",
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 10,
+      "verse_start": 1,
+      "verse_end": 29
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

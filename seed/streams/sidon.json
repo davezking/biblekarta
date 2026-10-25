@@ -1,0 +1,19 @@
+{
+  "id": "sidon",
+  "slug": "sidon",
+  "name_am": "ሲዶና ፡ ፊንቄ",
+  "name_en": "Sidon (Phoenicia)",
+  "kind": "lane",
+  "fill_color": "#D9C39A",
+  "lane_order": 2,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -999
+      },
+      "width": 1
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

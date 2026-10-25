@@ -1,0 +1,17 @@
+{
+  "id": "divided-kingdom",
+  "slug": "divided-kingdom",
+  "name_am": "የነገሥታት ዘመን",
+  "name_en": "Divided Kingdom",
+  "start": {
+    "scholarly": -999
+  },
+  "end": {
+    "scholarly": -799
+  },
+  "certainty": "anchored",
+  "status": "live",
+  "order": 5,
+  "canon": "shared",
+  "fixture": true
+}

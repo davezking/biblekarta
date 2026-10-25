@@ -1,0 +1,20 @@
+{
+  "id": "queen-of-sheba",
+  "slug": "queen-of-sheba",
+  "name_am": "ንግሥተ ሳባ",
+  "name_en": "Queen of Sheba",
+  "aliases": [],
+  "figure_kind": "queen",
+  "importance": 4,
+  "stream_id": "ethiopia",
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 10,
+      "verse_start": 1,
+      "verse_end": 29
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

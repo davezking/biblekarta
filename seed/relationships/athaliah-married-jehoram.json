@@ -1,0 +1,16 @@
+{
+  "id": "athaliah-married-jehoram",
+  "person_a_id": "athaliah",
+  "person_b_id": "jehoram-judah",
+  "type": "married",
+  "label_am": "ጎቶልያ (የአክዓብ ልጅ) ከይሁዳው ኢዮራም ጋር ተጋባች",
+  "refs": [
+    {
+      "book_id": "2ki",
+      "chapter": 8,
+      "verse_start": 18
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

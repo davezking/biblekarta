@@ -1,0 +1,25 @@
+{
+  "id": "kingdom-split",
+  "slug": "kingdom-split",
+  "title_am": "መንግሥቱ ለሁለት ተከፈለ",
+  "title_en": "The kingdom splits in two",
+  "stream_id": "united",
+  "type": "point",
+  "importance": 5,
+  "date_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "date_scholarly": {
+    "start": -930,
+    "certainty": "exact",
+    "method": "derived",
+    "anchor_id": "qarqar-853",
+    "anchor_value_used": -852,
+    "source_id": "thiele"
+  },
+  "refs": [],
+  "canon": "shared",
+  "fixture": true
+}

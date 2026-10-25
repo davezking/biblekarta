@@ -1,0 +1,22 @@
+{
+  "id": "united",
+  "slug": "united",
+  "name_am": "የተባበረው ፡ የእስራኤል ፡ መንግሥት",
+  "name_en": "United Kingdom of Israel",
+  "kind": "polity",
+  "fill_color": "#9DB28A",
+  "lane_order": 4,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -999
+      },
+      "width": 5
+    }
+  ],
+  "end": {
+    "scholarly": -930
+  },
+  "canon": "shared",
+  "fixture": true
+}

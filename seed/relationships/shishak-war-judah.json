@@ -1,0 +1,16 @@
+{
+  "id": "shishak-war-judah",
+  "person_a_id": "shishak",
+  "person_b_id": "rehoboam",
+  "type": "war",
+  "label_am": "ሺሻቅ ይሁዳን ወረረ",
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 14,
+      "verse_start": 25
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}

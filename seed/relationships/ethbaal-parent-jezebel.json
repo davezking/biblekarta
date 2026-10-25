@@ -1,0 +1,16 @@
+{
+  "id": "ethbaal-parent-jezebel",
+  "person_a_id": "ethbaal",
+  "person_b_id": "jezebel",
+  "type": "parent",
+  "label_am": "ልጁ ኤልዛቤል",
+  "refs": [
+    {
+      "book_id": "1ki",
+      "chapter": 16,
+      "verse_start": 31
+    }
+  ],
+  "canon": "shared",
+  "fixture": true
+}
