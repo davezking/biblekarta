@@ -21,7 +21,7 @@
 | **Verse ranges:** a verse may carry **`to`** (e.g. `{"n":14,"to":15,"t":"…"}`) | Owner, Oct 2026 | This edition prints some verses together as one range (279 verses, mostly NT, where the HTML has only "-"). Proofreaders confirm each with the **Join** decision; the range is stored once and shown as "፲፬–፲፭". A reference to any verse in the range (e.g. Heb 2:15) opens the range. |
 | **"!" is allowed punctuation** | Owner, Oct 2026 | The exclamation mark (ወዮ!, 261 uses) is stored like ። ፣ ፤ ፥ ?, and `wordSeparators()` never puts ፡ next to it. |
 | **Targeted proofreading:** the flagged verses (436 in round 1, plus 279 joined and 12 with unexpected characters added in Oct 2026), 31 anchor/interval checks, and a 2–5% spot-check with a 0.5% escalation rule. A second person reviews every change. | PRD v5.4 | This replaces checking all 31k verses. The estimate drops from 8–14 weeks to 3–5. |
-| **Public code repo + private scripture repo** | Your choice | Free branch protection and CODEOWNERS give **real FR-29 enforcement at merge time**. There's real GitHub auto-merge, and Actions minutes are unlimited. The promotion gate and the `production` branch are removed. |
+| **Public code repo + private scripture repo** | Your choice | Free branch protection and CODEOWNERS give **real FR-29 enforcement at merge time**. Actions minutes are unlimited. The promotion gate and the `production` branch are removed. |
 | Derived dates must follow **this edition's numbers** (Septuagint-type before Abraham, Hebrew-type from the Exodus) | PRD v5.4 appendix | Adds a derived-date calculator in Phase 3. |
 
 ---
@@ -91,7 +91,7 @@ flowchart LR
     TASK[(task/ID)]
     CMSB[(cms/* editor branches)]
   end
-  TASK -- PR, auto-merge --> PH -- phase sign-off --> MAIN
+  TASK -- PR, owner-ordered review --> PH -- phase sign-off --> MAIN
   ED[Editor] --> CMS[Decap /admin] -- OAuth --> AUTH[cms-auth Worker]
   CMS --> CMSB -- code-owner approval --> MAIN
 
@@ -212,13 +212,13 @@ erDiagram
 - **Readers:** no accounts, no cookies; a static, read-only site.
 - **Editors:** GitHub login through Decap; they are collaborators with write access to `biblekarta`. Scripture is not a CMS collection, and editors have **no access** to the scripture repo.
 - **Two-person review (FR-29), enforced at merge time:**
-  - **Ruleset on `main`:** pull request required; **code-owner review required**; required checks `ci/web` and `ci/tools`; no force push; no bypass.
+  - **Rulesets on `main`:** `main-checks` (pull request required; required checks `web` and `tools`; no force push; **no bypass**) and `main-review` (**code-owner review required**; the admin role may bypass it only through a pull request). The owner is also the content reviewer, so editors' content PRs get two people, but the owner's own edits to code-owned paths get one; add a second code owner when one exists (`docs/repo-rules.md`).
   - **`CODEOWNERS`:** `/content/` → the reviewer(s) + owner. `/scripture.lock`, `/.github/`, `/workers/`, `/public/admin/`, `/src/build/verify-scripture.ts` → owner.
   - A code-owner review must come from someone other than the PR author, so every content change needs a second person. Your own code PRs (phase → `main`) touch no code-owned content and merge after CI.
-  - **Ruleset on `phase-*`:** pull request required; required checks `ci/web`, `ci/tools` and `claude-review`; auto-merge allowed.
+  - **Ruleset on `phase-*`:** pull request required; required checks `web` and `tools`. There is no automatic Claude review: the owner orders a review of each PR in a Claude Code session, then merges.
 - **Public-repo hygiene:**
   - No secrets in the repo.
-  - Secrets are not exposed to fork PRs. Workflows use `pull_request`, never `pull_request_target`, and the Claude review job skips fork PRs.
+  - Secrets are not exposed to fork PRs. Workflows use `pull_request`, never `pull_request_target`.
   - Third-party actions are pinned by SHA (Phase 5).
   - Secret scanning and Dependabot are on.
 - **What becomes public:** code, content JSON, editors' draft PRs (CMS branches) and their GitHub names, and issues. Beta-tester feedback goes through a form, not public issues.
@@ -250,12 +250,14 @@ erDiagram
 |---|---|
 | `main` | Always the last approved phase, plus code-owner-approved content PRs. **Production deploys from `main`.** |
 | `phase-<N>` | Created from `main` at phase start. Merge `main` in whenever content lands. |
-| `task/<TASK-ID>` | Created from `phase-<N>`; its PR goes into `phase-<N>` and auto-merges when the checks pass. |
+| `task/<TASK-ID>` | Created from `phase-<N>`; its PR goes into `phase-<N>` and is merged by the owner after the checks pass and a Claude review the owner orders. |
 | `cms/<collection>/<slug>` | Decap editor branches; PRs into `main`, which need a code owner's approval. |
 
 When a phase is approved, merge `phase-<N>` → `main` and tag `v0.<N>-phase<N>`.
 
-**Scripture repo (private).** Tasks tagged `repo: scripture` run there. The flow is `task/<ID>` → PR → `main`. GitHub Free has no auto-merge on private repos, so `scripts/merge-when-green.sh` merges after CI and the Claude review. Frozen releases are tagged `text-v<N>`. The site picks up a release through a `scripture.lock` PR.
+**Phase 1 exception.** Phase 1's task PRs were merged straight into `main` (there was no `phase-1` branch), so its preview and e2e ran on `main` PRs instead. From Phase 2 on, the owner creates `phase-<N>` at phase start and task PRs target it.
+
+**Scripture repo (private).** Tasks tagged `repo: scripture` run there. The flow is `task/<ID>` → PR → `main`. After CI passes and the owner has ordered a Claude review, `scripts/merge-when-green.sh` (or the owner) merges. Frozen releases are tagged `text-v<N>`. The site picks up a release through a `scripture.lock` PR.
 
 **Preview deployments (Cloudflare Pages Git integration, public repo)**
 - **Production branch:** `main`.
@@ -273,9 +275,9 @@ When a phase is approved, merge `phase-<N>` → `main` and tag `v0.<N>-phase<N>`
 **CI**
 - **Public repo:**
   - `ci.yml` (PRs and `main`): lint, type check, unit tests, `validate`, `verify:scripture`, build. It runs twice: seeded, and production, which proves `/dev` is excluded.
-  - `e2e.yml`: Playwright on pushes to `phase-*`.
-  - `claude-review.yml`: reviews PRs into `phase-*` and sets a pass/fail check (required on `phase-*`).
-- **Scripture repo:** `ci.yml` runs ruff, pytest and `bk verify`. `claude-review.yml` reviews PRs into `main`.
+  - `e2e.yml`: Playwright on PRs into, and pushes to, `main` and `phase-*`.
+- **Scripture repo:** `ci.yml` runs ruff, pytest and `bk verify`.
+- **No automatic Claude review in either repo.** There's no `CLAUDE_CODE_OAUTH_TOKEN`; the owner orders a review in a Claude Code session ("review PR #<n> against docs/tasks/<ID>.md and CLAUDE.md") before merging.
 
 ## 9. Non-Functional Requirements
 
@@ -321,8 +323,9 @@ When a phase is approved, merge `phase-<N>` → `main` and tag `v0.<N>-phase<N>`
 - **Tasks in the same parallel group can run at the same time** in separate git worktrees: `scripts/parallel-group.sh <phase> <group>`. Tasks in a group never share files.
 
 **Review tiers**
-- `auto`: CI + Claude review pass → auto-merge. GitHub auto-merge works in the site repo; `merge-when-green.sh` handles the scripture repo.
-- `opus`: you run a manual Opus review before merging.
+Every PR gets a Claude review that **the owner orders** in a Claude Code session; nothing reviews or merges automatically. The tier says which model to use:
+- `auto`: a Sonnet review is enough.
+- `opus`: review with Opus.
 - Every phase ends with `/phase-review <N>`.
 
 **Task files.** Phase 1 has full task files. Phases 2–5 are one-line entries; their task files are generated when the previous phase closes.

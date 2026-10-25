@@ -38,7 +38,10 @@ Settings → Builds → **Build watch paths**: include `*`, exclude `docs/**` an
 
 The choice is written to `.scripture.env`, which `pnpm verify:scripture` and `pnpm build` read. The build copies the **verified** books byte-for-byte to `/data/scripture/<id>.json` and re-checks every verse against `checksums.json`.
 
-**Production guard:** a production build (no `BK_SEED=1`) **fails** while the scripture is the fixture book. This is on purpose, so the live site can never show the test book. Until the first text release exists, production deploys of `main` therefore fail; previews (which set `BK_SEED=1`) work.
+**Production guard** (`src/build/copy-scripture.ts`): a production build (no `BK_SEED=1`) never ships the fixture test book.
+- **No text release yet** (`scripture.lock` is `none`): it builds and publishes **no** scripture, so verses show "በዝግጅት ላይ".
+- **A release is pinned but only the fixtures were fetched** (e.g. `SCRIPTURE_TOKEN` missing): the build **fails**.
+- **Real text:** every published book must be the Society's edition (`BSE-1954-html+scan`), and the whole folder must pass `verify:scripture` (checksums, verse counts, text rules) before anything is copied.
 
 **Releasing a new text version:**
 1. In `biblekarta-scripture`, after `bk finalize` and a green `bk verify`: `git tag text-v<N> && git push origin text-v<N>`.
@@ -46,11 +49,11 @@ The choice is written to `.scripture.env`, which `pnpm verify:scripture` and `pn
 3. Put that 40-character SHA in this repo's `scripture.lock` (it is `none` until text-v1 exists), in a PR a code owner approves.
 
 ## 6. GitHub repo settings (`biblekarta`)
-- **Actions secrets:** `CLAUDE_CODE_OAUTH_TOKEN` (for the Claude PR review; from `claude setup-token`, uses your Claude subscription) and `SCRIPTURE_TOKEN` (the same PAT as above).
+- **Actions secret:** `SCRIPTURE_TOKEN` (the same PAT as above). No Claude token is needed: the owner orders PR reviews in a Claude Code session (`docs/WORKFLOW.md` §3).
 - **Labels:**
   ```
-  gh label create review:auto  --color 0E8A16 --description "Claude review, auto-merge when green"
-  gh label create review:opus  --color 5319E7 --description "Needs a manual Opus review"
+  gh label create review:auto  --color 0E8A16 --description "Owner orders a Sonnet review before merging"
+  gh label create review:opus  --color 5319E7 --description "Owner orders an Opus review before merging"
   gh label create feedback     --color FBCA04 --description "Feedback from a phase demo"
   ```
 - Rulesets, CODEOWNERS and repo options: see `docs/repo-rules.md`.

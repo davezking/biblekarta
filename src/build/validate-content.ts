@@ -4,6 +4,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { COLLECTIONS, loadBooks, type CollectionName } from '../lib/core/schema';
+import { resolveScriptureEnv } from './verify-scripture';
 
 export interface ValidationError {
   file: string;
@@ -96,12 +97,51 @@ function walkIds(
   }
 }
 
+type VerseCounts = Record<string, Record<string, number>>;
+
 /**
- * Hook: will check that every ScriptureRef's chapter and verses exist (scan numbering)
- * once the verse counts are available (P1-S3-T5). Does nothing yet.
+ * Every ScriptureRef (refs[], derivation_refs[], anywhere in an entry) must exist in the scan's
+ * numbering: its chapter is in verse-counts.json and its verses are within the chapter's count.
+ * Only books in verse-counts.json (the verified ones) can be checked; references into books that
+ * aren't verified yet are left for when they are.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- placeholder until P1-S3-T5
-export function checkVerseRanges(_entries: Entry[], _errors: ValidationError[]): void {}
+export function checkVerseRanges(
+  entries: Entry[],
+  counts: VerseCounts,
+  errors: ValidationError[],
+): void {
+  const visit = (value: unknown, path: PropertyKey[], file: string): void => {
+    if (Array.isArray(value)) return value.forEach((v, i) => visit(v, [...path, i], file));
+    if (!value || typeof value !== 'object') return;
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.book_id === 'string' && typeof obj.chapter === 'number') {
+      const book = counts[obj.book_id];
+      if (!book) return;
+      const where = `${obj.book_id} ${obj.chapter}`;
+      const n = book[String(obj.chapter)];
+      if (n === undefined) {
+        errors.push({
+          file,
+          path: formatPath([...path, 'chapter']),
+          message: `${where} is not a chapter in the scan's numbering`,
+        });
+        return;
+      }
+      for (const key of ['verse_start', 'verse_end'] as const) {
+        const v = obj[key];
+        if (typeof v === 'number' && v > n)
+          errors.push({
+            file,
+            path: formatPath([...path, key]),
+            message: `${where}:${v} is past the chapter's last verse (${n}, scan numbering)`,
+          });
+      }
+      return;
+    }
+    for (const [k, v] of Object.entries(obj)) visit(v, [...path, k], file);
+  };
+  for (const e of entries) visit(e.data, [], e.file);
+}
 
 export async function validateContent(opts: ValidateOptions = {}): Promise<ValidationError[]> {
   const { dir = 'content', withSeed = false, seedDir = 'seed' } = opts;
@@ -149,7 +189,8 @@ export async function validateContent(opts: ValidateOptions = {}): Promise<Valid
     }
     ids.set(c, new Set(seenIds.keys()));
   }
-  ids.set('books', new Set((await loadBooks(opts.scriptureDir)).map((b) => b.id)));
+  const scriptureDir = opts.scriptureDir ?? (await resolveScriptureEnv()).SCRIPTURE_DIR;
+  ids.set('books', new Set((await loadBooks(scriptureDir)).map((b) => b.id)));
 
   // 3. Referential integrity.
   const all = [...byCollection.values()].flat();
@@ -185,8 +226,18 @@ export async function validateContent(opts: ValidateOptions = {}): Promise<Valid
     }
   }
 
-  checkVerseRanges(all, errors);
+  const counts = await readVerseCounts(scriptureDir);
+  checkVerseRanges(all, counts, errors);
   return errors;
+}
+
+async function readVerseCounts(dir: string): Promise<VerseCounts> {
+  try {
+    return JSON.parse(await readFile(join(dir, 'verse-counts.json'), 'utf8')) as VerseCounts;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return {};
+    throw err;
+  }
 }
 
 export function formatText(errors: ValidationError[]): string {

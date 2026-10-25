@@ -105,6 +105,25 @@ describe('validateContent', () => {
   });
 });
 
+describe('checkVerseRanges', () => {
+  it('checks refs into verified books against verse-counts.json (scan numbering)', async () => {
+    const dir = `${F}/verse-ranges`;
+    const errors = await validateContent({
+      dir: `${dir}/content`,
+      scriptureDir: `${dir}/scripture`,
+    });
+    const file = `${dir}/content/people/test-king.json`;
+    expect(errors).toEqual([
+      { file, path: 'refs[1].chapter', message: "rut 5 is not a chapter in the scan's numbering" },
+      {
+        file,
+        path: 'refs[2].verse_end',
+        message: "rut 2:24 is past the chapter's last verse (23, scan numbering)",
+      },
+    ]); // rut 1:1–22 is fine; gen isn't verified, so gen 99 isn't checked yet
+  });
+});
+
 describe('seed/', () => {
   async function seedFiles(): Promise<{ file: string; data: unknown }[]> {
     const { readdir, readFile } = await import('node:fs/promises');

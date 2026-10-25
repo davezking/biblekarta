@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkProductionGuard, copyScripture } from './copy-scripture';
-import type { ScriptureEnv } from './verify-scripture';
+import { verseHash, type ScriptureEnv } from './verify-scripture';
 
 async function tmp(): Promise<string> {
   return mkdtemp(join(tmpdir(), 'bk-copy-'));
@@ -47,6 +47,25 @@ describe('copyScripture', () => {
     await writeFile(path, (await readFile(path, 'utf8')).replace('ነው', 'ነበር'));
     await expect(copyScripture(src, await tmp())).rejects.toThrow('checksum mismatch');
   });
+
+  it('refuses a book that fails the text rules, even with matching checksums', async () => {
+    const src = await tmp();
+    await cp('scripture-fixtures', src, { recursive: true });
+    const path = join(src, 'books/fixture.json');
+    const book = JSON.parse(await readFile(path, 'utf8'));
+    book.chapters[0].verses[0].t = book.chapters[0].verses[0].t.replace(' ', '፡');
+    await writeFile(path, JSON.stringify(book, null, 2) + '\n');
+    const sums = JSON.parse(await readFile(join(src, 'checksums.json'), 'utf8'));
+    sums['fixture.1.1'] = verseHash(book.chapters[0].verses[0].t);
+    await writeFile(join(src, 'checksums.json'), JSON.stringify(sums));
+    await expect(copyScripture(src, await tmp())).rejects.toThrow('contains ፡');
+  });
+
+  it('in production, refuses a book that is not the Society edition', async () => {
+    await expect(
+      copyScripture('scripture-fixtures', await tmp(), { requireEdition: true }),
+    ).rejects.toThrow('is not BSE-1954-html+scan');
+  });
 });
 
 describe('production guard', () => {
@@ -61,13 +80,20 @@ describe('production guard', () => {
     SCRIPTURE_VERSION: 'abc',
   };
 
-  it('refuses the fixture book in a production build', () => {
-    expect(() => checkProductionGuard(fixtures, {})).toThrow('production build refused');
+  const LOCK = 'a'.repeat(40);
+
+  it('ships no scripture in production while scripture.lock pins no release', () => {
+    expect(checkProductionGuard(fixtures, {})).toBe('none');
+    expect(checkProductionGuard(fixtures, {}, 'none\n')).toBe('none');
   });
 
-  it('allows previews, the CI escape hatch and real scripture', () => {
-    expect(() => checkProductionGuard(fixtures, { BK_SEED: '1' })).not.toThrow();
-    expect(() => checkProductionGuard(fixtures, { BK_ALLOW_FIXTURE_SCRIPTURE: '1' })).not.toThrow();
-    expect(() => checkProductionGuard(real, {})).not.toThrow();
+  it('refuses the fixture book in production once a release is pinned', () => {
+    expect(() => checkProductionGuard(fixtures, {}, LOCK)).toThrow('production build refused');
+  });
+
+  it('copies for previews, the CI escape hatch and real scripture', () => {
+    expect(checkProductionGuard(fixtures, { BK_SEED: '1' }, LOCK)).toBe('copy');
+    expect(checkProductionGuard(fixtures, { BK_ALLOW_FIXTURE_SCRIPTURE: '1' }, LOCK)).toBe('copy');
+    expect(checkProductionGuard(real, {}, LOCK)).toBe('copy');
   });
 });

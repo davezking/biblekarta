@@ -21,3 +21,7 @@ chapters, so it can't live in this public repo.
 The viewer test uses the real text when the build has it (`BK_SCRIPTURE=real`, after
 `scripts/fetch-scripture.sh` with `SCRIPTURE_TOKEN`): 1 Kings once it is verified, otherwise
 the first verified book. Without the token it uses the fixture test book.
+
+In CI, `.github/workflows/e2e.yml` runs these specs on every PR into `main` or `phase-*` and on
+pushes to them (fork PRs use the fixture book). The scripture pipeline test runs in that repo's
+`ci.yml` with the rest of its pytest suite.

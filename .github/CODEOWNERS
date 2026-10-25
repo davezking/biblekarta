@@ -1,8 +1,8 @@
-# Replace <OWNER> and <REVIEWER> with GitHub usernames; see docs/repo-rules.md.
-/content/                    @<OWNER> @<REVIEWER>
-/scripture.lock              @<OWNER>
-/.github/                    @<OWNER>
-/workers/                    @<OWNER>
-/public/admin/               @<OWNER>
-/src/build/verify-scripture.ts @<OWNER>
-/scripts/fetch-scripture.sh  @<OWNER>
+# Code owners. @davezking is both the owner and the content reviewer; see docs/repo-rules.md.
+/content/                    @davezking
+/scripture.lock              @davezking
+/.github/                    @davezking
+/workers/                    @davezking
+/public/admin/               @davezking
+/src/build/verify-scripture.ts @davezking
+/scripts/fetch-scripture.sh  @davezking
