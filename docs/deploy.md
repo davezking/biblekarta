@@ -11,7 +11,7 @@ Bible Karta is hosted on Cloudflare Pages (free tier) through its Git integratio
    | Framework preset | Astro |
    | Build command | `scripts/fetch-scripture.sh && pnpm build` |
    | Build output directory | `dist` |
-   | Node version | `22` (env var `NODE_VERSION=22`; `.nvmrc` also says 22) |
+   | Node version | `22.23.4` (env var `NODE_VERSION=22.23.4`; `.nvmrc` says the same; Astro 7 refuses older 22.x) |
 
 ## 2. Branches
 - **Production branch:** `main`.
@@ -60,3 +60,8 @@ The choice is written to `.scripture.env`, which `pnpm verify:scripture` and `pn
 
 ## 7. Check it
 Push a `task/*` branch and open a PR. Cloudflare comments a preview URL, and the page shows "የመጽሐፍ ቅዱስ ካርታ".
+
+## 8. When a build fails or doesn't start
+- **Retry deployment rebuilds the same old commit.** Check the log's `HEAD is now at <sha>` line. To build the latest `main`, merge a change to `main` (one outside `docs/**`, which the watch paths skip).
+- **No new builds after pushes:** check Settings → Builds → the connected repository and Branch control (automatic deployments on). Then check that GitHub → Settings → Applications → **Cloudflare Workers and Pages** still has access to `biblekarta`. Renaming the repo can break the connection; reconnect it if so.
+- Branches outside the preview list (for example `claude/*`) get no preview build. That is expected.
