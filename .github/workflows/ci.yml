@@ -58,3 +58,9 @@ jobs:
           if grep -rIlE 'gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}' . --exclude-dir=node_modules --exclude-dir=.git; then
             echo "::error::Possible GitHub token committed"; exit 1
           fi
+      - name: CODEOWNERS has real owners (no placeholders)
+        run: |
+          # GitHub silently ignores unknown owners, which would switch off the content review.
+          if grep -nE '<OWNER>|<REVIEWER>' .github/CODEOWNERS; then
+            echo "::error file=.github/CODEOWNERS::Replace the placeholder owners (docs/repo-rules.md)"; exit 1
+          fi
