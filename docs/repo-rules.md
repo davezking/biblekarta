@@ -85,7 +85,7 @@ JSON
 **Check it works:** a PR from a collaborator without admin rights that touches `content/` shows "Review required" until the owner approves; a PR with a red `web` or `tools` can't be merged by anyone.
 
 ## 3. Ruleset: `phase-*`
-Requires a PR and the `web`, `tools` and `review` checks (`review` is the job in `.github/workflows/claude-review.yml`), and blocks force pushes. No human approval, so `review:auto` task PRs can auto-merge.
+Requires a PR and the `web` and `tools` checks, and blocks force pushes. There is no automatic Claude review check: the owner orders a review of each PR in a Claude Code session, then merges.
 
 ```bash
 gh api -X POST "repos/$REPO/rulesets" --input - <<'JSON'
@@ -114,8 +114,7 @@ gh api -X POST "repos/$REPO/rulesets" --input - <<'JSON'
         "strict_required_status_checks_policy": false,
         "required_status_checks": [
           { "context": "web" },
-          { "context": "tools" },
-          { "context": "review" }
+          { "context": "tools" }
         ]
       }
     }
@@ -129,8 +128,8 @@ Check both: `gh api "repos/$REPO/rulesets" --jq '.[].name'`.
 ## 4. Repo options
 
 ```bash
-# Allow auto-merge, delete head branches after merge
-gh api -X PATCH "repos/$REPO" -F allow_auto_merge=true -F delete_branch_on_merge=true
+# Delete head branches after merge (no auto-merge: the owner merges after ordering a review)
+gh api -X PATCH "repos/$REPO" -F delete_branch_on_merge=true
 
 # Secret scanning + push protection
 gh api -X PATCH "repos/$REPO" --input - <<'JSON'

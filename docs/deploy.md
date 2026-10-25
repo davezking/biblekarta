@@ -49,11 +49,11 @@ The choice is written to `.scripture.env`, which `pnpm verify:scripture` and `pn
 3. Put that 40-character SHA in this repo's `scripture.lock` (it is `none` until text-v1 exists), in a PR a code owner approves.
 
 ## 6. GitHub repo settings (`biblekarta`)
-- **Actions secrets:** `CLAUDE_CODE_OAUTH_TOKEN` (for the Claude PR review; from `claude setup-token`, uses your Claude subscription) and `SCRIPTURE_TOKEN` (the same PAT as above).
+- **Actions secret:** `SCRIPTURE_TOKEN` (the same PAT as above). No Claude token is needed: the owner orders PR reviews in a Claude Code session (`docs/WORKFLOW.md` §3).
 - **Labels:**
   ```
-  gh label create review:auto  --color 0E8A16 --description "Claude review, auto-merge when green"
-  gh label create review:opus  --color 5319E7 --description "Needs a manual Opus review"
+  gh label create review:auto  --color 0E8A16 --description "Owner orders a Sonnet review before merging"
+  gh label create review:opus  --color 5319E7 --description "Owner orders an Opus review before merging"
   gh label create feedback     --color FBCA04 --description "Feedback from a phase demo"
   ```
 - Rulesets, CODEOWNERS and repo options: see `docs/repo-rules.md`.

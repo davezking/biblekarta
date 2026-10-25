@@ -70,7 +70,7 @@ docs/tasks/         one file per task   docs/phases/  phase demo scripts
 ## Branching
 - `main` = the last approved phase, plus code-owner-approved content PRs. Production deploys from `main`.
 - `phase-<N>` is branched from `main`; merge `main` in when content lands.
-- `task/<TASK-ID>` is branched from `phase-<N>`; its PR into `phase-<N>` auto-merges once the checks pass.
+- `task/<TASK-ID>` is branched from `phase-<N>`; its PR into `phase-<N>` merges after the checks pass and the owner has ordered a Claude review.
 - `cms/*` are Decap editor branches; their PRs into `main` need a code owner's approval.
 - When a phase is approved, merge `phase-<N>` → `main` and tag `v0.<N>-phase<N>`.
 

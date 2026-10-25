@@ -19,5 +19,4 @@ Implement the task in docs/tasks/$ARGUMENTS.md.
    - the acceptance criteria as a checklist
    - risks, and any edits outside `files`
 6. Add the label `review:auto` or `review:opus` from the task's `review` field.
-7. If it's `review: auto`, run `gh pr merge --auto --squash --delete-branch`. It merges once CI and the Claude review check pass.
-   If it's `review: opus`, stop and tell the user the PR is ready for a manual Opus review.
+7. Don't merge. Tell the user the PR is ready for the review they order (Sonnet for `review: auto`, Opus for `review: opus`); they merge it with a merge commit afterwards, never squash.
