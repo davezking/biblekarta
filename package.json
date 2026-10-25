@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.28.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.23.4"
   },
   "scripts": {
     "dev": "astro dev",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@astrojs/react": "^7.1.1",
-    "astro": "^5.18.2",
+    "astro": "^7.4.2",
     "d3-scale": "^4.0.2",
     "d3-selection": "^3.0.0",
     "d3-shape": "^3.2.0",
@@ -54,7 +54,7 @@
     "eslint-plugin-astro": "^3.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
-    "happy-dom": "^20.14.6",
+    "happy-dom": "^21.0.4",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.2",
     "subset-font": "^2.9.0",
