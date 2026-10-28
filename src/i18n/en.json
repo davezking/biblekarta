@@ -8,5 +8,21 @@
   "axis.traditional.prefix": "AA",
   "scripture.chapter": "Chapter {n}",
   "scripture.rule.pending-review": "pending ፡ rule (v{version})",
-  "scripture.rule.approved": "approved ፡ rule (v{version})"
+  "scripture.rule.approved": "approved ፡ rule (v{version})",
+  "chart.aria": "Bible history chart; scroll to zoom, drag sideways to move",
+  "chart.toolbar": "Chart controls",
+  "chart.loading": "Loading the chart…",
+  "chart.error": "The chart could not be loaded",
+  "axis.switch.label": "Chronology",
+  "axis.scholarly.name": "Scholarly research",
+  "axis.traditional.name": "Traditional",
+  "axis.unplaced": "{n} items have no traditional date",
+  "minimap.label": "The whole chart — from Creation to the Apostles",
+  "minimap.comingSoon": "Coming soon",
+  "lanes.menu": "Lanes",
+  "lanes.showAll": "Show all",
+  "band.traditionOnly": "Tradition only",
+  "gap.label": "Gap in time",
+  "zoom.in": "Zoom in",
+  "zoom.out": "Zoom out"
 }

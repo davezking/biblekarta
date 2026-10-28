@@ -1,0 +1,51 @@
+/* Chart island. Colours, sizes and lines come from tokens.css. */
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  position: relative;
+  z-index: var(--z-toolbar);
+}
+
+.chart-frame {
+  width: 100%;
+  overflow: hidden;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  /* Horizontal gestures belong to the chart; a vertical swipe still scrolls the page (DR-12). */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Stream outlines stay 1 px at every zoom: the geometry group is scaled in x only. */
+.chart-band {
+  stroke: var(--ink);
+  stroke-width: var(--line-hairline);
+  vector-effect: non-scaling-stroke;
+}
+
+/* Selection: red ink outline (DR-3). */
+.chart-selection {
+  fill: none;
+  stroke: var(--ink-red);
+  stroke-width: var(--line-strong);
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.chart-status {
+  text-align: center;
+  font-family: var(--font-ui);
+}
