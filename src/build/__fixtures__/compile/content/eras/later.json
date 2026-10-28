@@ -1,0 +1,11 @@
+{
+  "id": "later",
+  "slug": "later",
+  "name_am": "ወደፊት",
+  "name_en": "Later",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 3,
+  "minimap_weight": 2,
+  "canon": "shared"
+}
