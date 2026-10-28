@@ -1,0 +1,18 @@
+{
+  "id": "early",
+  "slug": "early",
+  "name_am": "ቀዳሚ",
+  "name_en": "Early",
+  "start": {
+    "scholarly": -1000,
+    "traditional": 4000
+  },
+  "end": {
+    "scholarly": -951,
+    "traditional": 4049
+  },
+  "certainty": "anchored",
+  "status": "live",
+  "order": 1,
+  "canon": "shared"
+}
