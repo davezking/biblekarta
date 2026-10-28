@@ -8,5 +8,21 @@
   "axis.traditional.prefix": "ከፍጥረት",
   "scripture.chapter": "ምዕራፍ {n}",
   "scripture.rule.pending-review": "የ፡ ደንብ ገና አልጸደቀም (ቁ. {version})",
-  "scripture.rule.approved": "የ፡ ደንብ ጸድቋል (ቁ. {version})"
+  "scripture.rule.approved": "የ፡ ደንብ ጸድቋል (ቁ. {version})",
+  "chart.aria": "የመጽሐፍ ቅዱስ ታሪክ ሰንጠረዥ፤ ለማጉላት ያሽከርክሩ፣ ለማንቀሳቀስ ወደ ጎን ይጎትቱ",
+  "chart.toolbar": "የሰንጠረዥ መቆጣጠሪያዎች",
+  "chart.loading": "ሰንጠረዡ በመጫን ላይ ነው…",
+  "chart.error": "ሰንጠረዡን መጫን አልተቻለም",
+  "axis.switch.label": "የዘመን አቆጣጠር",
+  "axis.scholarly.name": "ታሪካዊ ምርምር",
+  "axis.traditional.name": "ትውፊታዊ",
+  "axis.unplaced": "{n} ንጥሎች ትውፊታዊ ዘመን የላቸውም",
+  "minimap.label": "መላው ሰንጠረዥ — ከፍጥረት እስከ ሐዋርያት",
+  "minimap.comingSoon": "በቅርቡ",
+  "lanes.menu": "መስመሮች",
+  "lanes.showAll": "ሁሉንም አሳይ",
+  "band.traditionOnly": "ትውፊት ብቻ",
+  "gap.label": "የዘመን ክፍተት",
+  "zoom.in": "አቅርብ",
+  "zoom.out": "አርቅ"
 }

@@ -1,10 +1,56 @@
 ---
+// The home page: the chart when the compiled data has a live era, otherwise "under
+// construction" (Phase 1 demo step 9). The data is compiled into public/data/ before pages build
+// (compileDataIntegration); without a live era no chart JS is rendered or loaded.
+import { readFile } from 'node:fs/promises';
 import Base from '../layouts/Base.astro';
+import Chart from '../components/chart/Chart';
+import { INDEX_FILE, type IndexFile } from '../lib/core/datafiles';
+
+async function readIndex(): Promise<IndexFile | null> {
+  try {
+    return JSON.parse(await readFile(`public/data/${INDEX_FILE}`, 'utf8')) as IndexFile;
+  } catch {
+    return null;
+  }
+}
+const index = await readIndex();
+const live = index?.eras.some((e) => e.status === 'live') ?? false;
 ---
 
 <Base>
-  <main>
-    <h1>የመጽሐፍ ቅዱስ ካርታ</h1>
-    <p>በግንባታ ላይ</p>
-  </main>
+  {live ? (
+    <main class="home-chart">
+      <header class="cartouche">
+        <h1 class="rubric">የመጽሐፍ ቅዱስ ካርታ</h1>
+      </header>
+      <Chart client:load lang="am" />
+    </main>
+  ) : (
+    <main>
+      <h1>የመጽሐፍ ቅዱስ ካርታ</h1>
+      <p>በግንባታ ላይ</p>
+    </main>
+  )}
 </Base>
+
+<style>
+  .home-chart {
+    padding: var(--space-lg);
+  }
+  /* The title cartouche, centred above the toolbar (DR-11). */
+  .cartouche {
+    display: flex;
+    justify-content: center;
+    margin-block-end: var(--space-md);
+  }
+  .cartouche h1 {
+    margin: 0;
+    padding: var(--space-sm) var(--space-xxl);
+    /* Shrinks on phones so the title stays on one line. */
+    font-size: min(var(--font-size-title), 8vw);
+    border: var(--line-strong) solid var(--ink);
+    border-radius: var(--radius-pill);
+    background: var(--vellum);
+  }
+</style>
