@@ -328,7 +328,7 @@ Every PR gets a Claude review that **the owner orders** in a Claude Code session
 - `opus`: review with Opus.
 - Every phase ends with `/phase-review <N>`.
 
-**Task files.** Phase 1 has full task files. Phases 2–5 are one-line entries; their task files are generated when the previous phase closes.
+**Task files.** Phases 1 and 2 have full task files (Phase 2's were generated at the Phase 1 close-out, tag `v0.1-phase1`). Phases 3–5 are one-line entries; their task files are generated when the previous phase closes.
 
 ### Phase 1: Foundation & verified scripture pipeline (3 sprints, 22 tasks)
 
