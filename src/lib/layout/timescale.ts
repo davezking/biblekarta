@@ -41,8 +41,10 @@ export interface TimescaleConfig {
 }
 
 export interface TimescaleOptions {
-  /** Viewport the whole live domain must fit at kMin. */
+  /** Viewport the domain is sized for at k = 1. */
   viewportPx?: number;
+  /** Narrowest viewport (a small phone) that must still fit the whole domain at kMin. */
+  minViewportPx?: number;
   /** Minimum width of one year at kMax. */
   minYearPxAtKMax?: number;
   /** Margin added to each end of a domain; default 5% of its span, at least 5 years. */
@@ -53,6 +55,7 @@ export interface TimescaleOptions {
 }
 
 export const VIEWPORT_PX = 1440;
+export const MIN_VIEWPORT_PX = 320;
 export const MIN_YEAR_PX = 40;
 export const MIN_TICK_GAP_PX = 48;
 const BAND_SHARE = 0.2;
@@ -128,7 +131,8 @@ export function buildTimescaleConfig(
     (viewportPx - bandPx) / yearsIn(scholarly),
     viewportPx / yearsIn(traditional),
   );
-  const kMin = 1;
+  // k = 1 fits viewportPx; zooming out to kMin fits the narrowest phone too (FR-6, DR-12).
+  const kMin = Math.min(1, (opts.minViewportPx ?? MIN_VIEWPORT_PX) / viewportPx);
   const kMax = Math.max(kMin, (opts.minYearPxAtKMax ?? MIN_YEAR_PX) / pxPerYear);
   return { scholarly, traditional, pxPerYear, band, zoom: { kMin, kMax } };
 }
@@ -199,29 +203,26 @@ export type Placement =
 /**
  * Where an item goes on `axis` at k = 1, or why it can't be placed. Nothing is ever given an
  * invented position: a date with no year (method "relative") or no date at all is unplaced
- * (counted, not shown). On the scholarly axis, an item with no scholarly date but a
- * tradition-only traditional date goes in the band.
+ * (counted, not shown). On the scholarly axis, an item with no scholarly year (no date, or a
+ * relative one) but a dated tradition-only traditional date goes in the band.
  */
 export function place(item: Datable, axis: Axis, cfg: TimescaleConfig): Placement {
   const dv = item[axis];
-  if (dv) {
-    const span = spanOf(dv);
-    if (!span)
-      return { kind: 'unplaced', reason: dv.method === 'relative' ? 'relative' : 'missing' };
-    return { kind: 'axis', x0: x(span[0], axis, cfg), x1: x(span[1] + 1, axis, cfg) };
-  }
+  const span = dv ? spanOf(dv) : null;
+  if (span) return { kind: 'axis', x0: x(span[0], axis, cfg), x1: x(span[1] + 1, axis, cfg) };
+  // A date with no year counts as no date here, so a tradition-only item can still use the band.
   const trad = item.traditional;
   if (axis === 'scholarly' && trad?.certainty === 'tradition_only') {
-    const span = spanOf(trad);
-    if (!span) return { kind: 'unplaced', reason: 'relative' };
+    const aa = spanOf(trad);
+    if (!aa) return { kind: 'unplaced', reason: 'relative' };
     const band = cfg.band;
     if (!band) return { kind: 'unplaced', reason: 'no-band' };
-    if (span[0] < band.aaMin || span[1] > band.aaMax) {
+    if (aa[0] < band.aaMin || aa[1] > band.aaMax) {
       return { kind: 'unplaced', reason: 'outside-band' };
     }
-    return { kind: 'band', x0: xBand(span[0], cfg), x1: xBand(span[1] + 1, cfg) };
+    return { kind: 'band', x0: xBand(aa[0], cfg), x1: xBand(aa[1] + 1, cfg) };
   }
-  return { kind: 'unplaced', reason: 'missing' };
+  return { kind: 'unplaced', reason: dv?.method === 'relative' ? 'relative' : 'missing' };
 }
 
 /**
@@ -296,11 +297,15 @@ export function ticks(
  * keep the view centred when the reader switches axis. This is a calendar conversion
  * (AA ↔ Amete Mihret ↔ Gregorian, through dates.ts), NOT a claim that the two chronologies date
  * any event the same way. A Gregorian year maps to the AM year covering its January–September,
- * so the conversion round-trips.
+ * so the conversion round-trips. A fractional year (e.g. a view centre) keeps its fraction.
  */
 export function equivalentYear(year: number, from: Axis, to: Axis): number {
   if (from === to) return year;
-  if (from === 'traditional') return ameteMihretToGregorianRange(aaToAmeteMihret(year))[1];
+  const whole = Math.floor(year);
+  const frac = year - whole;
+  if (from === 'traditional') {
+    return ameteMihretToGregorianRange(aaToAmeteMihret(whole))[1] + frac;
+  }
   const gregorianOfAm0 = ameteMihretToGregorianRange(0)[1];
-  return ameteMihretToAa(year - gregorianOfAm0);
+  return ameteMihretToAa(whole - gregorianOfAm0) + frac;
 }

@@ -36,22 +36,21 @@ const dv = (fields: Partial<DateValue>): DateValue => ({
 
 const relative = dv({ certainty: 'tradition_only', method: 'relative', relative_text_am: 'TBD' });
 
-// The seed's Divided Kingdom era has scholarly years only. The AA numbers here are test
-// fixtures for the mapping, not dates of anything.
-const dividedKingdom = era({
-  id: 'divided-kingdom',
+// Abstract test eras: their years exercise the mapping and are not dates of anything.
+const testEra = era({
+  id: 'test-era',
   start: { scholarly: -999, traditional: 4500 },
   end: { scholarly: -799, traditional: 4700 },
 });
-const preAbraham = era({
-  id: 'pre-abraham',
+const bandEra = era({
+  id: 'band-era',
   certainty: 'tradition_only',
   start: { traditional: 1 },
   end: { traditional: 3000 },
 });
 
-const cfg = buildTimescaleConfig([dividedKingdom]);
-const banded = buildTimescaleConfig([preAbraham, dividedKingdom]);
+const cfg = buildTimescaleConfig([testEra]);
+const banded = buildTimescaleConfig([bandEra, testEra]);
 const AXES: Axis[] = ['scholarly', 'traditional'];
 
 // Deterministic PRNG (mulberry32) for the property tests.
@@ -76,7 +75,7 @@ describe('buildTimescaleConfig', () => {
 
   it('honours an explicit margin and ignores coming-soon eras', () => {
     const c = buildTimescaleConfig(
-      [dividedKingdom, era({ status: 'coming_soon', start: { scholarly: -3000 } })],
+      [testEra, era({ status: 'coming_soon', start: { scholarly: -3000 } })],
       { marginYears: 10 },
     );
     expect(c.scholarly).toEqual({ min: -1009, max: -789 });
@@ -101,10 +100,11 @@ describe('buildTimescaleConfig', () => {
     expect(banded.traditional.min).toBeLessThan(1);
   });
 
-  it('fits the live domain in 1440 px at kMin, and one year is ≥ 40 px at kMax', () => {
+  it('fits the live domain in 1440 px, and in a 320 px phone, at kMin; one year is ≥ 40 px at kMax', () => {
     for (const c of [cfg, banded]) {
       for (const axis of AXES) {
-        expect(totalWidth(axis, c) * c.zoom.kMin).toBeLessThanOrEqual(1440 + 1e-9);
+        expect(totalWidth(axis, c)).toBeLessThanOrEqual(1440 + 1e-9);
+        expect(totalWidth(axis, c) * c.zoom.kMin).toBeLessThanOrEqual(320 + 1e-9);
       }
       expect(c.pxPerYear * c.zoom.kMax).toBeGreaterThanOrEqual(40 - 1e-9);
       expect(c.zoom.kMax).toBeGreaterThanOrEqual(c.zoom.kMin);
@@ -271,6 +271,29 @@ describe('place', () => {
     expect(place(late, 'scholarly', banded)).toEqual({ kind: 'unplaced', reason: 'outside-band' });
   });
 
+  it('bands a tradition-only item whose scholarly date has no year', () => {
+    const item = {
+      scholarly: relative,
+      traditional: dv({
+        start: 1000,
+        certainty: 'tradition_only',
+        method: 'traditional',
+        source_id: 's',
+      }),
+    };
+    expect(place(item, 'scholarly', banded)).toEqual({
+      kind: 'band',
+      x0: xBand(1000, banded),
+      x1: xBand(1001, banded),
+    });
+    // Without a band it stays unplaced; a plain relative date still reports "relative".
+    expect(place(item, 'scholarly', cfg)).toEqual({ kind: 'unplaced', reason: 'no-band' });
+    expect(place({ scholarly: relative }, 'scholarly', banded)).toEqual({
+      kind: 'unplaced',
+      reason: 'relative',
+    });
+  });
+
   it('does not band a traditional date that is not tradition-only', () => {
     const item = { traditional: dv({ start: 1000, method: 'traditional', source_id: 's' }) };
     expect(place(item, 'scholarly', banded)).toEqual({ kind: 'unplaced', reason: 'missing' });
@@ -395,6 +418,14 @@ describe('equivalentYear', () => {
       const [, g] = ameteMihretToGregorianRange(aaToAmeteMihret(aa));
       expect(equivalentYear(aa, 'traditional', 'scholarly')).toBe(g);
     }
+  });
+
+  it('keeps the fraction of a fractional year (a view centre)', () => {
+    expect(equivalentYear(2026.25, 'scholarly', 'traditional')).toBeCloseTo(7518.25);
+    expect(equivalentYear(7518.5, 'traditional', 'scholarly')).toBeCloseTo(2026.5);
+    expect(equivalentYear(-852.75, 'scholarly', 'traditional')).toBeCloseTo(
+      equivalentYear(-853, 'scholarly', 'traditional') + 0.25,
+    );
   });
 
   it('round-trips', () => {
