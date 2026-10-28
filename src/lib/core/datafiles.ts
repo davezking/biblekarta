@@ -66,7 +66,12 @@ export interface IndexFile {
   anchors: Anchor[];
   /** Per live era id, per axis: how many items have no position (counted, not shown). */
   unplaced: Record<string, Record<Axis, UnplacedCounts>>;
+  /** Items that belong to no live era, so are in no tile (e.g. a streamless event with TBD dates). */
+  unassigned: Unassigned;
 }
+
+/** Items that belong to no live era, by kind. */
+export type Unassigned = Record<keyof UnplacedCounts, Unplaced>;
 
 export interface TileAxis {
   bands: StreamBand[];

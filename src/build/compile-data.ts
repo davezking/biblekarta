@@ -21,6 +21,7 @@ import {
   type IndexStream,
   type TileAxis,
   type TileFile,
+  type Unassigned,
   type UnplacedCounts,
 } from '../lib/core/datafiles';
 import {
@@ -37,9 +38,8 @@ import {
 import { layoutStreams, type AxisLayout, type Unplaced } from '../lib/layout/streams';
 import { buildTimescaleConfig, x, type Axis, type TimescaleConfig } from '../lib/layout/timescale';
 import { checkProductionGuard } from './copy-scripture';
-import { loadVerifiedBooks } from './scripture-books';
 import { formatText, validateContent } from './validate-content';
-import { resolveScriptureEnv } from './verify-scripture';
+import { readBookFiles, resolveScriptureEnv } from './verify-scripture';
 
 type Env = Record<string, string | undefined>;
 
@@ -202,11 +202,17 @@ async function readLock(path: string): Promise<string> {
   }
 }
 
-/** The ids copy-scripture publishes: none when it publishes none, else the verified books. */
+/**
+ * The ids copy-scripture publishes: none when it publishes none, else the verified books of the
+ * same scripture folder (both read from `env`).
+ */
 async function publishedBooks(env: Env, lock: string): Promise<string[]> {
-  const plan = checkProductionGuard(await resolveScriptureEnv(env), env, lock);
-  if (plan === 'none') return [];
-  return (await loadVerifiedBooks()).map((b) => b.id);
+  const scripture = await resolveScriptureEnv(env);
+  if (checkProductionGuard(scripture, env, lock) === 'none') return [];
+  return (await readBookFiles(scripture.SCRIPTURE_DIR))
+    .filter(({ book }) => book.status === 'verified')
+    .map(({ book }) => book.book)
+    .sort();
 }
 
 export function checkBudget(file: string, json: string, budget: number): FileReport {
@@ -290,6 +296,20 @@ export async function compileData(opts: CompileOptions): Promise<CompileResult> 
 
   const tiles: Record<string, TileFile> = {};
   let index: IndexFile;
+  /** Items in no live era: in no tile, so counted here instead. */
+  const unassignedOf = (inEra: (kind: keyof Unassigned, id: string) => boolean): Unassigned => {
+    const list = (kind: keyof Unassigned, xs: { id: string }[]): Unplaced => {
+      const ids = xs.map((v) => v.id).filter((id) => !inEra(kind, id));
+      return { count: ids.length, ids };
+    };
+    return {
+      streams: list('streams', data.streams),
+      reigns: list('reigns', data.reigns),
+      events: list('events', data.events),
+      people: list('people', data.people),
+    };
+  };
+  let unassigned: Unassigned;
 
   if (live.length === 0) {
     index = {
@@ -303,6 +323,7 @@ export async function compileData(opts: CompileOptions): Promise<CompileResult> 
       streams: indexStreams,
       anchors: data.anchors,
       unplaced: {},
+      unassigned: (unassigned = unassignedOf(() => false)),
     };
   } else {
     const cfg = buildTimescaleConfig(eras);
@@ -448,7 +469,20 @@ export async function compileData(opts: CompileOptions): Promise<CompileResult> 
       streams: indexStreams,
       anchors: data.anchors,
       unplaced: unplacedIndex,
+      unassigned: (unassigned = unassignedOf(
+        (kind, id) =>
+          ({ streams: streamEras, reigns: reignEras, events: eventEras, people: personEras })[
+            kind
+          ].get(id)!.size > 0,
+      )),
     };
+  }
+
+  const loose = Object.entries(unassigned)
+    .filter(([, u]) => u.count > 0)
+    .map(([kind, u]) => `${kind}: ${u.ids.join(', ')}`);
+  if (live.length > 0 && loose.length) {
+    logger.warn(`in no live era (not in any tile): ${loose.join('; ')}`);
   }
 
   // Serialize, check budgets, write.

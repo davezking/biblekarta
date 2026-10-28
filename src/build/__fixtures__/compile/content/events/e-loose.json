@@ -1,0 +1,15 @@
+{
+  "id": "e-loose",
+  "slug": "e-loose",
+  "title_am": "ክስተት",
+  "title_en": "Event",
+  "type": "point",
+  "date_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "importance": 3,
+  "refs": [],
+  "canon": "shared"
+}

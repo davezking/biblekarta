@@ -107,11 +107,22 @@ describe('compileData', () => {
     expect(index.unplaced.late!.traditional.events).toBe(1);
   });
 
+  it('counts the items that belong to no live era, since no tile has them', async () => {
+    const warn = vi.fn();
+    const { index, tiles } = await run({}, { logger: { info: () => {}, warn } });
+    // e-loose has no stream and only a TBD traditional date.
+    expect(index.unassigned.events).toEqual({ count: 1, ids: ['e-loose'] });
+    expect(index.unassigned.reigns).toEqual({ count: 0, ids: [] });
+    expect(Object.values(tiles).flatMap((t) => ids(t.events))).not.toContain('e-loose');
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/in no live era.*events: e-loose/));
+  });
+
   it('writes an empty index and no tiles for a production build with no content', async () => {
     const empty = await mkdtemp(join(tmpdir(), 'bk-empty-'));
     const r = await run({}, { contentDir: empty });
     expect(r.index.eras).toEqual([]);
     expect(r.index.timescale).toBeNull();
+    expect(r.index.unassigned.events.count).toBe(0);
     expect(r.tiles).toEqual({});
     expect(await readdir(r.outDir)).toEqual(['index.json']);
     expect(await read(r.outDir, 'index.json')).not.toContain('"fixture":true');
@@ -159,6 +170,17 @@ describe('compileData', () => {
     });
     expect(Object.keys(r.index.layout!)).toEqual(['scholarly', 'traditional']);
     expect(r.tiles.early!.version).toBe(1);
+  });
+
+  it('lists the verified books of the scripture folder named in env', async () => {
+    const env = { BK_SEED: '1', SCRIPTURE_DIR: 'scripture-fixtures', BK_SCRIPTURE: 'fixtures' };
+    const r = await run(env, { scriptureBooks: undefined });
+    expect(r.index.scriptureBooks).toEqual(['fixture']);
+    const none = await run(
+      { ...env, SCRIPTURE_DIR: join(FIX, 'content') },
+      { scriptureBooks: undefined },
+    );
+    expect(none.index.scriptureBooks).toEqual([]);
   });
 
   it('reads the scripture version from the lock file', async () => {
