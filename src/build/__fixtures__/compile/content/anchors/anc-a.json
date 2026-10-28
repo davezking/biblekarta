@@ -1,0 +1,11 @@
+{
+  "id": "anc-a",
+  "label_am": "መልሕቅ",
+  "label_en": "Test anchor",
+  "date": {
+    "start": -950
+  },
+  "external_source": "test",
+  "confidence": "high",
+  "canon": "shared"
+}
