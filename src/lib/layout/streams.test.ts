@@ -212,6 +212,19 @@ describe('forks and ends', () => {
     expect(b.x1).toBeCloseTo(x(-849, 'scholarly', cfg), 1);
   });
 
+  it('tapers a parent whose children fork long after it ends, and gives it its own slot', () => {
+    const early = { ...parent, end: { scholarly: -950 } };
+    const out = layoutStreams({ streams: [early, upper, lower], ...empty }, 'scholarly', cfg);
+    const bp = band(out, 'parent');
+    const endYs = points(bp.d)
+      .filter(([x0]) => Math.abs(x0 - x(-949, 'scholarly', cfg)) < 0.05)
+      .map(([, y]) => y);
+    expect(Math.max(...endYs)).toBe(bp.cy);
+    expect(Math.min(...endYs)).toBe(bp.cy);
+    const up = band(out, 'upper');
+    expect(up.cy + up.height / 2).toBeLessThanOrEqual(bp.cy - bp.height / 2);
+  });
+
   it('gives a forked child that outlives a continuing parent its own slot', () => {
     const p = stream({ id: 'p', lane_order: 1 });
     const c = stream({
@@ -311,6 +324,25 @@ describe('rows', () => {
     );
     expect(l.reigns.map((r) => r.row)).toEqual([0, 0]);
     expect(band(l, 'k').rows).toBe(0);
+  });
+
+  it('counts the rows of the events packed in a polity, without widening it', () => {
+    const seedL = layoutStreams(seed, 'scholarly', seedCfg);
+    const united = band(seedL, 'united');
+    const inUnited = seedL.events.filter((e) => e.stream_id === 'united');
+    expect(inUnited.length).toBeGreaterThan(0);
+    expect(united.rows).toBe(Math.max(...inUnited.map((e) => e.row)) + 1);
+    // The band keeps its keyframe width; only ribbons and lanes grow for rows.
+    expect(united.height).toBe(5 * WIDTH_UNIT_PX);
+  });
+
+  it('marks a span with only one dated end as open on the other side', () => {
+    const l = layoutStreams(seed, 'scholarly', seedCfg);
+    // Seed: David has only an end date, Hazael only a start date.
+    expect(l.reigns.find((r) => r.reign_id === 'david')).toMatchObject({ open: 'start' });
+    expect(l.reigns.find((r) => r.reign_id === 'hazael')).toMatchObject({ open: 'end' });
+    expect(l.reigns.find((r) => r.reign_id === 'ahab')).not.toHaveProperty('open');
+    expect(l.events.every((e) => e.open === undefined)).toBe(true);
   });
 });
 

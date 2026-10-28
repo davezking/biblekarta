@@ -5,6 +5,7 @@
 import { curveMonotoneX, line } from 'd3-shape';
 import type { DateValue, Event, Person, Reign, Stream } from '../core/schema';
 import { packIntervals, rowCount } from './intervals';
+import { spanOf } from '../core/dates';
 import { place, spanDates, x, type Axis, type Datable, type TimescaleConfig } from './timescale';
 
 // Sizes, checked against design-reference/board5-desktop.html (7.6 px/year there):
@@ -53,9 +54,11 @@ export interface StreamBand {
   cy: number;
   /** Full width in px (the stream's widest keyframe). */
   height: number;
-  /** Rows of packed items (ribbon and lane streams); 0 for polities. */
+  /** Rows of packed items (for a polity: its events and people; its reigns sit on the centre). */
   rows: number;
 }
+
+export type OpenSide = 'start' | 'end';
 
 export interface ReignSegment {
   reign_id: string;
@@ -65,6 +68,8 @@ export interface ReignSegment {
   x1: number;
   row: number;
   dashed: boolean;
+  /** Only one end has a year: the other side is unknown, not a 1-year span (draw it fading). */
+  open?: OpenSide;
   /** Placed in the tradition-only band (scholarly axis only). */
   band?: true;
 }
@@ -76,6 +81,7 @@ export interface EventMark {
   x1: number;
   row: number;
   dashed: boolean;
+  open?: OpenSide;
   band?: true;
 }
 
@@ -86,6 +92,7 @@ export interface PersonSpan {
   x1: number;
   row: number;
   dashed: boolean;
+  open?: OpenSide;
   band?: true;
 }
 
@@ -163,6 +170,17 @@ export function widthAt(keyframes: readonly { year: number; width: number }[], t
 const isApprox = (...dvs: (DateValue | undefined)[]) =>
   dvs.some((dv) => dv?.certainty === 'approximate');
 
+type Pair = [start: DateValue | undefined, end: DateValue | undefined];
+
+/** Which side of a start/end pair has no year, when the other side has one. */
+function openSide([start, end]: Pair): OpenSide | undefined {
+  const a = start ? spanOf(start) : null;
+  const b = end ? spanOf(end) : null;
+  if (a && !b) return 'end';
+  if (!a && b) return 'start';
+  return undefined;
+}
+
 interface Placed {
   key: string;
   id: string;
@@ -170,6 +188,7 @@ interface Placed {
   x0: number;
   x1: number;
   dashed: boolean;
+  open: OpenSide | undefined;
   band: boolean;
   /** Reigns in a polity sit in row 0; everything else is packed. */
   fixedRow: boolean;
@@ -193,46 +212,54 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
     kind: 'reigns' | 'events' | 'people',
     id: string,
     streamId: string | null,
-    item: Datable,
-    dashed: boolean,
+    pairs: Record<Axis, Pair>,
     fixedRow: boolean,
   ) => {
+    const item: Datable = {
+      scholarly: spanDates(...pairs.scholarly),
+      traditional: spanDates(...pairs.traditional),
+    };
     const p = place(item, axis, cfg);
     if (p.kind === 'unplaced') {
       unplaced[kind].push(id);
       return;
     }
+    // A band placement uses the traditional dates.
+    const used = pairs[p.kind === 'band' ? 'traditional' : axis];
     placed.push({
       key: `${kind}:${id}`,
       id,
       stream_id: streamId,
       x0: r1(p.x0),
       x1: r1(p.x1),
-      dashed,
+      dashed: isApprox(...used),
+      open: openSide(used),
       band: p.kind === 'band',
       fixedRow,
     });
   };
   for (const r of [...input.reigns].sort(byId)) {
-    const item = {
-      scholarly: spanDates(r.start_scholarly, r.end_scholarly),
-      traditional: spanDates(r.start_traditional, r.end_traditional),
+    const pairs: Record<Axis, Pair> = {
+      scholarly: [r.start_scholarly, r.end_scholarly],
+      traditional: [r.start_traditional, r.end_traditional],
     };
-    const dashed = isApprox(r[`start_${axis}`], r[`end_${axis}`]);
-    add('reigns', r.id, r.stream_id, item, dashed, streamById.get(r.stream_id)?.kind === 'polity');
+    add('reigns', r.id, r.stream_id, pairs, streamById.get(r.stream_id)?.kind === 'polity');
   }
   for (const e of [...input.events].sort(byId)) {
-    const item = { scholarly: e.date_scholarly, traditional: e.date_traditional };
-    add('events', e.id, e.stream_id ?? null, item, isApprox(e[`date_${axis}`]), false);
+    const pairs: Record<Axis, Pair> = {
+      scholarly: [e.date_scholarly, e.date_scholarly],
+      traditional: [e.date_traditional, e.date_traditional],
+    };
+    add('events', e.id, e.stream_id ?? null, pairs, false);
   }
   const withReign = new Set(input.reigns.map((r) => r.person_id));
   for (const p of [...input.people].sort(byId)) {
     if (withReign.has(p.id)) continue;
-    const item = {
-      scholarly: spanDates(p.birth_scholarly, p.death_scholarly),
-      traditional: spanDates(p.birth_traditional, p.death_traditional),
+    const pairs: Record<Axis, Pair> = {
+      scholarly: [p.birth_scholarly, p.death_scholarly],
+      traditional: [p.birth_traditional, p.death_traditional],
     };
-    add('people', p.id, p.stream_id, item, isApprox(p[`birth_${axis}`], p[`death_${axis}`]), false);
+    add('people', p.id, p.stream_id, pairs, false);
   }
 
   // Rows: per stream, everything not in a fixed row is packed together.
@@ -245,7 +272,9 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
       continue;
     }
     const k = it.stream_id ?? '';
-    byStream.set(k, [...(byStream.get(k) ?? []), it]);
+    const list = byStream.get(k);
+    if (list) list.push(it);
+    else byStream.set(k, [it]);
   }
   for (const [k, items] of byStream) {
     const rows = packIntervals(
@@ -282,7 +311,9 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
   for (const s of streams) {
     if (!lives.has(s.id)) continue;
     const root = rootOf(s);
-    groups.set(root.id, [...(groups.get(root.id) ?? []), s]);
+    const list = groups.get(root.id);
+    if (list) list.push(s);
+    else groups.set(root.id, [s]);
   }
   const roots = [...groups.keys()].map((id) => streamById.get(id)!).sort(byOrder);
 
@@ -294,15 +325,16 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
     const memberIds = new Set(members.map((m) => m.id));
     const childrenOf = (id: string) => members.filter((m) => m.parent_stream_id === id);
 
-    // A parent whose forked children carry on from its end shares their space instead of
-    // taking a slot of its own (Board 5: the United Kingdom between Israel and Judah).
+    // A parent whose forked children all start within FORK_YEARS of its end, carrying it on,
+    // shares their space instead of taking a slot of its own (Board 5: the United Kingdom
+    // between Israel and Judah).
     const continued = (s: Stream): boolean => {
       const life = lives.get(s.id)!;
       const kids = childrenOf(s.id);
       if (life.endYear === undefined || kids.length === 0) return false;
       return kids.every((c) => {
         const f = lives.get(c.id)!.forkYear;
-        return f !== undefined && f >= life.endYear! - FORK_YEARS;
+        return f !== undefined && Math.abs(f - life.endYear!) <= FORK_YEARS;
       });
     };
 
@@ -352,7 +384,7 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
         x1: r1(x(life.endX, axis, cfg)),
         cy: cy.get(m.id)!,
         height: fullPx.get(m.id)!,
-        rows: m.kind === 'polity' ? 0 : (rowsIn.get(m.id) ?? 0),
+        rows: rowsIn.get(m.id) ?? 0,
       });
     }
     lanes.push({ id: root.id, y0: r1(laneY), height, stream_ids: members.map((m) => m.id) });
@@ -361,7 +393,10 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
 
   const out = <T>(kind: 'reigns' | 'events' | 'people', f: (p: Placed, row: number) => T): T[] =>
     placed.filter((p) => p.key.startsWith(`${kind}:`)).map((p) => f(p, rowOf.get(p.key) ?? 0));
-  const bandFlag = (p: Placed) => (p.band ? { band: true as const } : {});
+  const flags = (p: Placed) => ({
+    ...(p.open ? { open: p.open } : {}),
+    ...(p.band ? { band: true as const } : {}),
+  });
   const reignById = new Map(input.reigns.map((r) => [r.id, r]));
   const list = (ids: string[]): Unplaced => ({ count: ids.length, ids: [...ids].sort() });
 
@@ -378,7 +413,7 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
       x1: p.x1,
       row,
       dashed: p.dashed,
-      ...bandFlag(p),
+      ...flags(p),
     })),
     events: out('events', (p, row) => ({
       event_id: p.id,
@@ -387,7 +422,7 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
       x1: p.x1,
       row,
       dashed: p.dashed,
-      ...bandFlag(p),
+      ...flags(p),
     })),
     people: out('people', (p, row) => ({
       person_id: p.id,
@@ -396,7 +431,7 @@ export function layoutStreams(input: LayoutInput, axis: Axis, cfg: TimescaleConf
       x1: p.x1,
       row,
       dashed: p.dashed,
-      ...bandFlag(p),
+      ...flags(p),
     })),
     unplaced: {
       streams: list(unplacedStreams),

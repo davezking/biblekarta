@@ -43,7 +43,7 @@ exports[`seed (scholarly) > matches the snapshot 1`] = `
       "height": 180,
       "kind": "polity",
       "lane_id": "united",
-      "rows": 0,
+      "rows": 1,
       "stream_id": "united",
       "x0": 65.2,
       "x1": 521.3,
@@ -238,6 +238,7 @@ exports[`seed (scholarly) > matches the snapshot 1`] = `
     },
     {
       "dashed": false,
+      "open": "start",
       "person_id": "david",
       "reign_id": "david",
       "row": 0,
@@ -256,6 +257,7 @@ exports[`seed (scholarly) > matches the snapshot 1`] = `
     },
     {
       "dashed": true,
+      "open": "end",
       "person_id": "hazael",
       "reign_id": "hazael",
       "row": 0,
