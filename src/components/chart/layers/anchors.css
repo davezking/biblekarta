@@ -1,0 +1,75 @@
+/* Anchor lines (FR-23, DR-8), the tradition-only band and gap labels (R10). Colours, lines and fonts
+   come from tokens.css. */
+
+/* Red dashed, full height, 1 px at every zoom (the geometry group is scaled in x only). */
+.anchor-line {
+  stroke: var(--ink-red);
+  stroke-width: var(--line-outline);
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* The ≥ 44 px wide tap target: a transparent, non-scaling stroke. */
+.anchor-hit {
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+}
+
+.anchor {
+  outline: none;
+}
+.anchor:focus-visible .anchor-line,
+.anchor[aria-expanded='true'] .anchor-line {
+  stroke-width: var(--line-strong);
+  stroke-dasharray: none;
+}
+
+.anchor-popover {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  max-width: min(320px, calc(100vw - 16px));
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--vellum);
+  color: var(--ink);
+  border: 1px solid var(--ink-red);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  pointer-events: auto;
+}
+.anchor-popover p {
+  margin: 0;
+}
+.anchor-popover-title {
+  font-family: var(--font-manuscript);
+  font-weight: 400;
+}
+.anchor-popover-confidence {
+  font-size: var(--font-size-xs);
+}
+
+/* The tradition-only band: a light wash over the lane area. */
+.band-tint {
+  fill: var(--ink);
+  fill-opacity: 0.06;
+  pointer-events: none;
+}
+
+.chart-band-labels text {
+  font-family: var(--font-manuscript);
+  font-weight: 400;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.band-label {
+  fill: var(--ink-red);
+  font-size: var(--font-size-sm);
+}
+.gap-label {
+  fill: var(--ink);
+  font-size: var(--font-size-sm);
+}

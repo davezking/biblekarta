@@ -24,5 +24,11 @@
   "band.traditionOnly": "Tradition only",
   "gap.label": "Gap in time",
   "zoom.in": "Zoom in",
-  "zoom.out": "Zoom out"
+  "zoom.out": "Zoom out",
+  "anchor.label": "{en}",
+  "anchor.title": "{label} — {source}",
+  "anchor.confidence": "Confidence: {level}",
+  "anchor.confidence.high": "high",
+  "anchor.confidence.medium": "medium",
+  "anchor.confidence.low": "low"
 }
