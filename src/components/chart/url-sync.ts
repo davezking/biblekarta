@@ -2,7 +2,8 @@
 //
 // - On start: the URL's state is applied in order: the axis first (zoom clamps to the axis's
 //   width), then the view through the ChartController, then the selection and hidden lanes.
-// - After each committed change the URL is rewritten with history.replaceState. A new selection
+// - After each committed change the URL is rewritten with history.replaceState (an axis switch
+//   once its new view has landed). A new selection
 //   pushes a history entry instead, so Back closes it. Back (popstate) restores only the selection
 //   of the entry it lands on: the view stays where the reader left it.
 // - Gesture rule: the URL is never written during a gesture. The store's committed viewport also
@@ -25,6 +26,7 @@ import {
   type TimescaleConfig,
 } from '../../lib/layout/timescale';
 import { clampView, sameView } from './axis-switch';
+import { selectionLane } from './controls/LaneMenu';
 import type { ChartState, ChartStore, Selection } from './state';
 import type { ChartController, View } from './zoom';
 
@@ -144,6 +146,16 @@ export function startUrlSync(o: UrlSyncOptions): () => void {
     clearTimeout(timer);
     timer = undefined;
   };
+  /** Writes once the view has been still for settleMs and the live view is the committed one
+   * (not mid-animation or mid-gesture). */
+  const settle = () => {
+    cancel();
+    timer = setTimeout(() => {
+      const v = store.getSnapshot().committedViewport;
+      if (v && !sameView(controller.getView(), v)) settle();
+      else write(false);
+    }, settleMs);
+  };
   const write = (push: boolean) => {
     cancel();
     const url = urlFor(store.getSnapshot());
@@ -166,13 +178,17 @@ export function startUrlSync(o: UrlSyncOptions): () => void {
       controller.setView(fitView(parsed.axis, cfg, width));
     }
   }
-  store.hydrate({
-    selection: selectionFor(parsed.sel),
-    hiddenLanes: parsed.hide.flatMap((slug) => {
-      const id = streamBySlug.get(slug)?.id;
-      return id && laneIds.has(id) ? [id] : [];
-    }),
+  const hiddenLanes = parsed.hide.flatMap((slug) => {
+    const id = streamBySlug.get(slug)?.id;
+    return id && laneIds.has(id) ? [id] : [];
   });
+  // A selection in a hidden lane is dropped, as hiding that lane would clear it (LaneMenu).
+  let selection = selectionFor(parsed.sel);
+  const lanes = index.layout?.[parsed.axis].lanes ?? [];
+  if (selection && hiddenLanes.includes(selectionLane(selection, o.getTile(), lanes) ?? '')) {
+    selection = null;
+  }
+  store.hydrate({ selection, hiddenLanes });
   // Normalize the URL (junk dropped) without adding an entry.
   write(false);
 
@@ -186,11 +202,12 @@ export function startUrlSync(o: UrlSyncOptions): () => void {
     if (restoring) return;
     if (!sameSel(s.selection, before.selection)) {
       write(s.selection !== null);
-    } else if (s.axis !== before.axis || s.hiddenLanes !== before.hiddenLanes) {
+    } else if (s.hiddenLanes !== before.hiddenLanes) {
       write(false);
-    } else if (s.committedViewport !== before.committedViewport) {
-      cancel();
-      timer = setTimeout(() => write(false), settleMs);
+    } else if (s.axis !== before.axis || s.committedViewport !== before.committedViewport) {
+      // An axis switch is written once its view has landed: until then the committed viewport is
+      // the old axis's, whose x is another year on this axis.
+      settle();
     }
   });
 

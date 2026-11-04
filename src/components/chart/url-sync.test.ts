@@ -63,7 +63,12 @@ function fakeController(store: ChartStore, log: string[] = []) {
   let view: View = fitView(store.getSnapshot().axis, index.timescale!, WIDTH);
   const commit = () => store.commitViewport({ ...view, width: WIDTH });
   commit();
-  const controller: ChartController = {
+  const controller: ChartController & {
+    /** Moves the live view without committing it (mid-gesture or mid-animation). */
+    live: (v: View) => void;
+    /** Commits the live view (the gesture or animation ends). */
+    land: () => void;
+  } = {
     getView: () => view,
     setView: (v) => {
       log.push(`view:${store.getSnapshot().axis}`);
@@ -72,6 +77,10 @@ function fakeController(store: ChartStore, log: string[] = []) {
     },
     panToYear: () => {},
     focusOn: () => {},
+    live: (v) => {
+      view = clampView(v, store.getSnapshot().axis, index.timescale!, WIDTH);
+    },
+    land: commit,
   };
   return controller;
 }
@@ -138,6 +147,17 @@ describe('startUrlSync: hydrating', () => {
     expect(m.location.search).toBe('?y=-850&z=5&hide=assyria');
   });
 
+  it('drops a selection whose lane is hidden', () => {
+    const assyrian = data.tile.reigns.find((r) => r.stream_id === 'assyria')!;
+    const m = start(`?sel=r:${assyrian.id}&hide=assyria`);
+    expect(m.store.getSnapshot().selection).toBeNull();
+    expect(m.store.getSnapshot().hiddenLanes).toEqual(['assyria']);
+    expect(m.location.search).toBe('?hide=assyria');
+    // In a lane that is shown, it stays.
+    const kept = start(`?sel=r:${assyrian.id}&hide=egypt`);
+    expect(kept.store.getSnapshot().selection).toEqual({ kind: 'reign', id: assyrian.id });
+  });
+
   it('restores a reign and an event selection', () => {
     const r = reign();
     expect(start(`?sel=r:${r.id}`).store.getSnapshot().selection).toEqual({
@@ -189,6 +209,8 @@ describe('startUrlSync: writing', () => {
     m.store.toggleLane('assyria');
     expect(m.calls.at(-1)).toEqual({ kind: 'replace', url: `/?sel=r:${reign().id}&hide=assyria` });
     m.store.setAxis('traditional');
+    // The axis waits for its view to land (here at once: no animation).
+    vi.advanceTimersByTime(URL_SETTLE_MS);
     expect(m.calls.at(-1)!.kind).toBe('replace');
     expect(m.location.search).toContain('ax=t');
     m.store.select(null);
@@ -201,7 +223,7 @@ describe('startUrlSync: writing', () => {
     const m = start();
     // A long inertia gesture: the store commits every 150 ms for 2 s.
     for (let i = 1; i <= 14; i++) {
-      m.store.commitViewport({ x: -100 * i, k: 3, width: WIDTH });
+      m.controller.setView({ x: -100 * i, k: 3 });
       vi.advanceTimersByTime(150);
     }
     expect(m.calls).toEqual([]);
@@ -216,10 +238,37 @@ describe('startUrlSync: writing', () => {
   it('writes a selection at once, carrying the view of a gesture not yet written', () => {
     vi.useFakeTimers();
     const m = start();
-    m.store.commitViewport({ x: -500, k: 3, width: WIDTH });
+    m.controller.setView({ x: -500, k: 3 });
     m.store.select({ kind: 'person', id: 'ahab' });
     expect(m.calls).toHaveLength(1);
     expect(m.calls[0]!.url).toMatch(/^\/\?y=-?\d+&z=3&sel=p:ahab$/);
+    vi.advanceTimersByTime(URL_SETTLE_MS);
+    expect(m.calls).toHaveLength(1);
+  });
+
+  it('writes an axis switch once its view has landed, with the year on screen', () => {
+    vi.useFakeTimers();
+    const m = start('?y=-850&z=5');
+    const writes = m.calls.length;
+    // AxisSwitch: the axis first, then an animated setView that commits only when it ends.
+    m.store.setAxis('traditional');
+    m.controller.live({ x: -2000, k: 5 });
+    vi.advanceTimersByTime(3 * URL_SETTLE_MS);
+    expect(m.calls.length).toBe(writes);
+    m.controller.land();
+    vi.advanceTimersByTime(URL_SETTLE_MS);
+    expect(m.calls.slice(writes)).toHaveLength(1);
+    expect(m.location.search).toBe(`?y=${Math.round(centreYear(m.store))}&z=5&ax=t`);
+  });
+
+  it('waits out a view still moving after its last commit', () => {
+    vi.useFakeTimers();
+    const m = start();
+    m.controller.setView({ x: -500, k: 3 });
+    m.controller.live({ x: -900, k: 3 });
+    vi.advanceTimersByTime(5 * URL_SETTLE_MS);
+    expect(m.calls).toEqual([]);
+    m.controller.land();
     vi.advanceTimersByTime(URL_SETTLE_MS);
     expect(m.calls).toHaveLength(1);
   });
@@ -235,7 +284,7 @@ describe('startUrlSync: writing', () => {
   it('stops writing once stopped', () => {
     vi.useFakeTimers();
     const m = start();
-    m.store.commitViewport({ x: -500, k: 3, width: WIDTH });
+    m.controller.setView({ x: -500, k: 3 });
     m.stop();
     m.store.select({ kind: 'person', id: 'ahab' });
     vi.advanceTimersByTime(URL_SETTLE_MS);
