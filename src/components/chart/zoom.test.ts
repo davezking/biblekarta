@@ -324,4 +324,17 @@ describe('zoom', () => {
     expect(v.k).toBeCloseTo(Math.min(cfg.zoom.kMax, (WIDTH * 0.9) / 100));
     vi.unstubAllGlobals();
   });
+  it('moves a live setView without committing, and commits on the next plain setView', async () => {
+    const m = await mount();
+    const before = m.commits.count;
+    const committed = m.store.getSnapshot().committedViewport;
+    act(() => {
+      for (let i = 1; i <= 10; i++) m.controller.setView({ x: -100 * i, k: 3 }, { live: true });
+    });
+    expect(m.commits.count).toBe(before);
+    expect(m.store.getSnapshot().committedViewport).toBe(committed);
+    expect(parse(m.geometry.getAttribute('transform')).x).toBeCloseTo(-1000);
+    act(() => m.controller.setView({ x: -1100, k: 3 }));
+    expect(m.store.getSnapshot().committedViewport).toMatchObject({ x: -1100, k: 3 });
+  });
 });

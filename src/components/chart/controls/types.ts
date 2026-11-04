@@ -2,12 +2,15 @@
 import type { IndexFile, TileFile } from '../../../lib/core/datafiles';
 import type { T } from '../../../lib/i18n';
 import type { ChartStore } from '../state';
+import type { ViewportChannel } from '../viewport';
 import type { ChartController } from '../zoom';
 
 export interface ControlProps {
   store: ChartStore;
   /** Null until the chart has measured itself and attached zoom. */
   controller: ChartController | null;
+  /** The live viewport during gestures (rAF-throttled), for controls that follow it imperatively. */
+  viewport: ViewportChannel;
   index: IndexFile;
   tile: TileFile;
   t: T;

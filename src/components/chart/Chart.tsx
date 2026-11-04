@@ -175,7 +175,7 @@ function ChartView({ index, tile, store, channel, t, onController, syncUrl }: Ch
     t,
   };
   const bands = tile.axes[s.axis].bands;
-  const controls = { store, controller, index, tile, t };
+  const controls = { store, controller, viewport: channel, index, tile, t };
 
   return (
     <div className="chart">
