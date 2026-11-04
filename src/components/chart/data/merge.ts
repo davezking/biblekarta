@@ -91,6 +91,37 @@ export function mergeTiles(
   };
 }
 
+const ids = (geo: TileAxis) =>
+  [
+    geo.bands.map((b) => b.stream_id).join(','),
+    geo.reigns.map((r) => r.reign_id).join(','),
+    geo.events.map((e) => e.event_id).join(','),
+    geo.people.map((p) => p.person_id).join(','),
+  ].join('|');
+
+/** The last culled view per merged view and axis, with the ids it kept. */
+const lastCull = new WeakMap<TileFile, Map<Axis, { sig: string; view: TileFile }>>();
+
+/**
+ * cullView, but returning the previous result (the same object) when the same items survive, so
+ * a commit that keeps the visible set doesn't make every layer recompute.
+ */
+export function cullViewStable(
+  view: TileFile,
+  axis: Axis,
+  range: [number, number],
+  marginPx: number,
+): TileFile {
+  const next = cullView(view, axis, range, marginPx);
+  const sig = ids(next.axes[axis]);
+  let perAxis = lastCull.get(view);
+  if (!perAxis) lastCull.set(view, (perAxis = new Map()));
+  const prev = perAxis.get(axis);
+  if (prev && prev.sig === sig) return prev.view;
+  perAxis.set(axis, { sig, view: next });
+  return next;
+}
+
 /** The view with one axis's geometry culled to [x0, x1] ± marginPx (the other axis untouched). */
 export function cullView(
   view: TileFile,

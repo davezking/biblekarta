@@ -12,7 +12,7 @@ import { INDEX_FILE, type IndexFile, type TileFile } from '../../../lib/core/dat
 import { invert, type Axis, type TimescaleConfig } from '../../../lib/layout/timescale';
 import { INITIAL_STATE, type ChartState, type ChartStore, type Viewport } from '../state';
 import { visibleRange } from '../viewport';
-import { cullView, mergeTiles } from './merge';
+import { cullViewStable, mergeTiles } from './merge';
 import { createTileCache, isAbort, type TileCache } from './tiles';
 import { erasInWindow } from './window';
 
@@ -56,7 +56,7 @@ export function viewportYears(
 /** The view culled to the viewport plus one screen width each side (no viewport: unculled). */
 function culled(view: TileFile, axis: Axis, v: Viewport | null): TileFile {
   if (!v) return view;
-  return cullView(view, axis, visibleRange(v), v.width / v.k);
+  return cullViewStable(view, axis, visibleRange(v), v.width / v.k);
 }
 
 /**
@@ -86,7 +86,11 @@ export function useChartData(
     (async () => {
       const res = await fetch(`${base}${INDEX_FILE}`, { signal: ctrl.signal });
       if (!res.ok) throw new Error(`${base}${INDEX_FILE}: HTTP ${res.status}`);
-      setIndex((await res.json()) as IndexFile);
+      const loaded = (await res.json()) as IndexFile;
+      // Nothing to chart without a live era: report it rather than hand the chart an index it
+      // cannot draw.
+      if (!loaded.timescale || !loaded.layout) throw new Error('index has no live era to chart');
+      setIndex(loaded);
     })().catch((err: unknown) => {
       if (ctrl.signal.aborted) return;
       console.error('chart data:', err);
@@ -118,6 +122,9 @@ export function useChartData(
       });
     }
   }, [index, slugs, initial, cache]);
+
+  // On unmount, abort every tile request still in flight.
+  useEffect(() => () => cache.retain('', []), [cache]);
 
   // The merged, culled view of what is loaded in the window.
   const merged = useMemo(() => {

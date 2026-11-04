@@ -235,6 +235,63 @@ describe('useChartData', () => {
     expect(log).toHaveBeenCalled();
   });
 
+  it('retries a failed tile when its era comes back into the window', async () => {
+    hold = true;
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const store = createChartStore();
+    store.commitViewport(viewOf('a'));
+    const out = await mountHook(store);
+    calls.find((c) => c.url.endsWith('a.json'))!.fail();
+    calls.find((c) => c.url.endsWith('b.json'))!.resolve();
+    await flush();
+    expect(ready(out.state).tile.era).toBe('b');
+    // Away to c (window b, c: a leaves) and back: a is requested again and arrives.
+    await act(async () => store.commitViewport(viewOf('c')));
+    await act(async () => store.commitViewport(viewOf('a')));
+    const retry = calls.filter((c) => c.url.endsWith('a.json'));
+    expect(retry).toHaveLength(2);
+    retry[1]!.resolve();
+    await flush();
+    expect(ready(out.state).tile.era).toBe('a+b');
+  });
+
+  it('keeps the same view object when a commit leaves the visible set unchanged', async () => {
+    const store = createChartStore();
+    store.commitViewport(viewOf('b'));
+    const out = await mountHook(store);
+    const first = ready(out.state).tile;
+    const v = viewOf('b');
+    await act(async () => store.commitViewport({ ...v, x: v.x - 0.5 }));
+    expect(ready(out.state).tile).toBe(first);
+    // A real move that changes what is near the screen gives a new view.
+    await act(async () => store.commitViewport(viewOf('a')));
+    await flush();
+    expect(ready(out.state).tile).not.toBe(first);
+  });
+
+  it('aborts tile requests still in flight when the chart unmounts', async () => {
+    hold = true;
+    const store = createChartStore();
+    store.commitViewport(viewOf('a'));
+    await mountHook(store);
+    const pending = calls.filter((c) => c.url.includes('tiles/'));
+    expect(pending.length).toBeGreaterThan(0);
+    act(() => root.unmount());
+    for (const c of pending) expect(c.signal.aborted).toBe(true);
+    root = undefined as unknown as Root;
+  });
+
+  it('reports an error for an index with no live era to chart', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const empty = { ...index, timescale: null, layout: null };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(empty), { status: 200 })),
+    );
+    const out = await mountHook(createChartStore());
+    expect(out.state.status).toBe('error');
+  });
+
   it('reports an error when the index cannot load', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.stubGlobal(

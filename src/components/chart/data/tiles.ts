@@ -23,7 +23,8 @@ export interface TileCache {
   load: (buildId: string, slug: string, path: string) => Promise<TileFile>;
   /** Aborts requests outside `slugs` (of this build) and evicts LRU tiles beyond the capacity. */
   retain: (buildId: string, slugs: readonly string[]) => void;
-  /** Whether the last load of this tile failed (not aborted); a failed tile isn't retried. */
+  /** Whether the last load of this tile failed (not aborted). It isn't retried while its era
+   * stays in the window; once the era leaves the window the failure is forgotten. */
   failed: (buildId: string, slug: string) => boolean;
   /** Whether any tile of this build is loaded. */
   hasAny: (buildId: string) => boolean;
@@ -99,6 +100,10 @@ export function createTileCache(o: TileCacheOptions): TileCache {
     },
     retain: (buildId, slugs) => {
       retained = new Set(slugs.map((s) => keyOf(buildId, s)));
+      // A failure is forgotten once its era leaves the window, so coming back retries it (a
+      // network blip must not blank an era for the session). Retries happen only on window
+      // changes, so a broken tile can't loop.
+      for (const key of failures) if (!retained.has(key)) failures.delete(key);
       for (const [key, { ctrl }] of inFlight) {
         if (!retained.has(key)) {
           ctrl.abort();

@@ -97,6 +97,26 @@ describe('createTileCache', () => {
     expect(cache.hasAny('b3')).toBe(false);
   });
 
+  it('forgets a failure once its era leaves the window, so coming back retries it', async () => {
+    const f = deferredFetch();
+    const cache = createTileCache({ base: '/', fetch: f.fn });
+    cache.retain('b1', ['a']);
+    const p = cache.load('b1', 'a', 'a.json');
+    f.calls[0]!.fail();
+    await expect(p).rejects.toThrow();
+    // Still in the window: not retried.
+    cache.retain('b1', ['a', 'b']);
+    expect(cache.failed('b1', 'a')).toBe(true);
+    // Out of the window and back: retried, and this time it arrives.
+    cache.retain('b1', ['b']);
+    expect(cache.failed('b1', 'a')).toBe(false);
+    cache.retain('b1', ['a']);
+    const again = cache.load('b1', 'a', 'a.json');
+    expect(f.calls).toHaveLength(2);
+    f.calls[1]!.resolve(tile('a'));
+    expect((await again).era).toBe('a');
+  });
+
   it('records a failed tile and does not retry it', async () => {
     const f = deferredFetch();
     const cache = createTileCache({ base: '/', fetch: f.fn });
