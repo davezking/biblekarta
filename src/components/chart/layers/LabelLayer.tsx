@@ -31,7 +31,7 @@ import {
   type Measure,
 } from '../../../lib/layout/lod';
 import { FORK_YEARS } from '../../../lib/layout/streams';
-import { spanDates, type Axis } from '../../../lib/layout/timescale';
+import { invert, spanDates, x as yearToX, type Axis } from '../../../lib/layout/timescale';
 import type { Viewport } from '../state';
 import { reignBoxes, type ReignBox } from './ReignLayer';
 import type { LayerProps } from './types';
@@ -44,7 +44,9 @@ export const STREAM_NAME_PX = 16;
 /** A press this long on a reign, without moving, opens its tooltip. */
 export const LONG_PRESS_MS = 500;
 /** A touch that moves further than this is a pan, not a long-press. */
-const LONG_PRESS_SLOP_PX = 10;
+export const LONG_PRESS_SLOP_PX = 10;
+/** The click that follows a long-press's release arrives within this long. */
+const CLICK_AFTER_PRESS_MS = 400;
 /** Bands at least this tall letter their name along the top; thinner ones centre it. */
 const TOP_NAME_MIN_HEIGHT_PX = 72;
 const STREAM_NAME_INSET_PX = 8;
@@ -158,6 +160,12 @@ interface StreamName {
   y: number;
 }
 
+/** Where a forked stream reaches full width: FORK_YEARS after its start, through timescale.ts. */
+function afterFork(x0: number, axis: Axis, cfg: LayerProps['cfg']): number {
+  const at = invert(x0, axis, cfg);
+  return at.band ? x0 : yearToX(at.year + FORK_YEARS, axis, cfg);
+}
+
 function streamNames(p: Omit<LabelInput, 't'>): StreamName[] {
   const meta = new Map(p.index.streams.map((s) => [s.id, s]));
   const out: StreamName[] = [];
@@ -175,7 +183,7 @@ function streamNames(p: Omit<LabelInput, 't'>): StreamName[] {
       name: s.name_am,
       ink: streamInk(s.fill_color),
       // A forked stream tapers from its fork: letter its name where it is full width.
-      x0: band.x0 + (s.parent_stream_id ? FORK_YEARS * p.cfg.pxPerYear : 0),
+      x0: s.parent_stream_id ? afterFork(band.x0, p.axis, p.cfg) : band.x0,
       x1: band.x1,
       y,
     });
@@ -203,8 +211,26 @@ interface Placed {
 type Box = [x0: number, x1: number, y0: number, y1: number];
 const overlaps = (a: Box, b: Box) => a[0] < b[1] && a[1] > b[0] && a[2] < b[3] && a[3] > b[2];
 
+/** The label nodes, looked up once per render rather than on every viewport frame. */
+interface Nodes {
+  names: Map<string, SVGTextElement>;
+  labels: { g: SVGGElement; texts: SVGTextElement[] }[];
+}
+
+function nodesOf(root: SVGGElement): Nodes {
+  const names = new Map<string, SVGTextElement>();
+  for (const el of root.querySelectorAll<SVGTextElement>('text[data-stream-name]')) {
+    names.set(el.dataset.streamName!, el);
+  }
+  const labels = [...root.querySelectorAll<SVGGElement>('g.reign-label')].map((g) => ({
+    g,
+    texts: [...g.querySelectorAll('text')],
+  }));
+  return { names, labels };
+}
+
 function place(
-  root: SVGGElement,
+  nodes: Nodes,
   v: Viewport,
   reigns: Map<string, ReignLabelData>,
   lod: Map<string, { mode: LabelMode; width: number }>,
@@ -215,7 +241,7 @@ function place(
   // Stream names sit in the visible part of their stream, at its left.
   const nameBoxes = new Map<string, Box>();
   for (const n of names) {
-    const el = root.querySelector<SVGTextElement>(`text[data-stream-name="${n.id}"]`);
+    const el = nodes.names.get(n.id);
     if (!el) continue;
     const w = measure(n.name, 'name') * (STREAM_NAME_PX / NAME_PX);
     const x = Math.max(sx(n.x0), 0) + STREAM_NAME_INSET_PX;
@@ -229,7 +255,7 @@ function place(
     }
   }
   const placed: Placed = { full: new Set(), named: new Set() };
-  for (const g of root.querySelectorAll<SVGGElement>('g.reign-label')) {
+  for (const { g, texts } of nodes.labels) {
     const id = g.dataset.label!;
     const r = reigns.get(id);
     const label = lod.get(id);
@@ -251,7 +277,7 @@ function place(
     }
     g.removeAttribute('visibility');
     const x = String(Math.round(mid * 10) / 10);
-    for (const text of g.querySelectorAll('text')) text.setAttribute('x', x);
+    for (const text of texts) text.setAttribute('x', x);
     placed.named.add(id);
     if (label.mode === 'full') placed.full.add(id);
   }
@@ -290,7 +316,16 @@ function showTooltip(
   tip.removeAttribute('visibility');
 }
 
+/** The view the tooltip opened on: finger jitter (a pixel or two of pan) must not close it. */
+const tipViews = new WeakMap<SVGGElement, Viewport>();
+
+/** Whether the view moved more than finger jitter since `from`. */
+export function movedPast(from: Viewport, to: Viewport, slopPx = LONG_PRESS_SLOP_PX): boolean {
+  return Math.abs(to.x - from.x) > slopPx || Math.abs(to.k / from.k - 1) > 0.02;
+}
+
 const hideTooltip = (tip: SVGGElement) => {
+  tipViews.delete(tip);
   tip.setAttribute('visibility', 'hidden');
   tip.removeAttribute('data-reign');
 };
@@ -345,14 +380,16 @@ export default function LabelLayer(props: LayerProps) {
   useLayoutEffect(() => {
     const root = rootRef.current!;
     const tip = tipRef.current!;
+    const nodes = nodesOf(root);
     const run = (v: Viewport) => {
-      placedRef.current = place(root, v, byId, lod, names, measure);
+      placedRef.current = place(nodes, v, byId, lod, names, measure);
     };
     const v = viewport.get() ?? committed;
     if (v) run(v);
     return viewport.subscribe((next) => {
       run(next);
-      hideTooltip(tip);
+      const opened = tipViews.get(tip);
+      if (opened && movedPast(opened, next)) hideTooltip(tip);
     });
   }, [viewport, committed, byId, lod, names, measure]);
 
@@ -373,9 +410,13 @@ export default function LabelLayer(props: LayerProps) {
       const r = byId.get(id);
       if (!r || placedRef.current.full.has(id)) return hideTooltip(tip);
       showTooltip(tip, r, local(e), width(), measure);
+      const v = viewport.get() ?? committed;
+      if (v) tipViews.set(tip, v);
     };
 
     let press: { id: string; pointerId: number; x: number; y: number; timer: number } | null = null;
+    /** The pointer whose long-press opened the tooltip, until it lifts. */
+    let longPressed: number | null = null;
     let suppressClickUntil = 0;
     const cancelPress = () => {
       if (press) clearTimeout(press.timer);
@@ -389,6 +430,7 @@ export default function LabelLayer(props: LayerProps) {
         }
         return;
       }
+      if (e.buttons) return;
       const id = reignAt(e);
       if (id) open(id, e);
       else hideTooltip(tip);
@@ -401,14 +443,21 @@ export default function LabelLayer(props: LayerProps) {
       if (!id) return;
       const timer = window.setTimeout(() => {
         press = null;
+        longPressed = e.pointerId;
         open(id, e);
-        // The release that ends a long-press is not a tap.
-        suppressClickUntil = Date.now() + 800;
       }, LONG_PRESS_MS);
       press = { id, pointerId: e.pointerId, x: e.clientX, y: e.clientY, timer };
     };
-    const onUp = () => cancelPress();
-    const onLeave = () => {
+    const onUp = (e: PointerEvent) => {
+      cancelPress();
+      // The release that ends a long-press is not a tap, however long the press was held.
+      if (longPressed === e.pointerId) {
+        longPressed = null;
+        suppressClickUntil = Date.now() + CLICK_AFTER_PRESS_MS;
+      }
+    };
+    const onLeave = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
       cancelPress();
       hideTooltip(tip);
     };

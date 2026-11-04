@@ -4,7 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { contrastRatio } from '../../../lib/core/contrast';
 import { ink, MIN_TEXT_CONTRAST, TEXT_ON_FILL } from '../../../lib/core/tokens';
-import { totalWidth } from '../../../lib/layout/timescale';
+import { FORK_YEARS } from '../../../lib/layout/streams';
+import { totalWidth, x as yearToX } from '../../../lib/layout/timescale';
 import Chart from '../Chart';
 import type { ChartData } from '../data/useChartData';
 import { seedChartData } from '../seed-data.testutil';
@@ -228,6 +229,57 @@ describe('LabelLayer', () => {
     expect(m.store.getSnapshot().selection).toEqual({ kind: 'reign', id: 'omri' });
   });
 
+  it('does not select on the release of a long-press held for seconds', async () => {
+    const m = await mount(360);
+    const hit = m.svg.querySelector('rect.reign-hit[data-reign="omri"]')!;
+    act(() => pointer(hit, 'pointerdown', { clientX: 100, clientY: 300 }));
+    act(() => void vi.advanceTimersByTime(3000));
+    expect(tooltipShown(m.svg)).toBe(true);
+    act(() => pointer(hit, 'pointerup', {}));
+    // On touch, the browser sends pointerleave after the lift; the tooltip stays to be read.
+    act(() => pointer(m.svg, 'pointerleave', {}));
+    await act(async () => hit.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(m.store.getSnapshot().selection).toBeNull();
+    expect(tooltipShown(m.svg)).toBe(true);
+    // The next touch closes it.
+    act(() => pointer(m.svg, 'pointerdown', { pointerId: 2, clientX: 10, clientY: 10 }));
+    expect(tooltipShown(m.svg)).toBe(false);
+  });
+
+  it('keeps a long-press tooltip open through finger jitter, and closes it on a real pan', async () => {
+    const m = await mount(360);
+    focus(m, 'omri', 0.5, 360);
+    expect(shownLabel(m.svg, 'omri')).toBeNull();
+    const hit = m.svg.querySelector('rect.reign-hit[data-reign="omri"]')!;
+    act(() => pointer(hit, 'pointerdown', { clientX: 180, clientY: 300 }));
+    act(() => void vi.advanceTimersByTime(LONG_PRESS_MS));
+    expect(tooltipShown(m.svg)).toBe(true);
+    const x0 = m.controller.getView().x;
+    // A held finger wobbles a couple of px: zoom.ts pans by that much.
+    act(() => {
+      pointer(hit, 'pointermove', { clientX: 182, clientY: 301 });
+      pointer(hit, 'pointermove', { clientX: 179, clientY: 299 });
+      vi.advanceTimersByTime(20);
+    });
+    expect(m.controller.getView().x).not.toBe(x0);
+    expect(tooltipShown(m.svg)).toBe(true);
+    // A real pan closes it.
+    act(() => {
+      pointer(hit, 'pointermove', { clientX: 240, clientY: 300 });
+      vi.advanceTimersByTime(20);
+    });
+    expect(tooltipShown(m.svg)).toBe(false);
+  });
+
+  it('opens no hover tooltip while a mouse button is held (a drag pan)', async () => {
+    const m = await mount(360);
+    const hit = m.svg.querySelector('rect.reign-hit[data-reign="omri"]')!;
+    act(() => pointer(hit, 'pointermove', { pointerType: 'mouse', buttons: 1, clientX: 50 }));
+    expect(tooltipShown(m.svg)).toBe(false);
+    act(() => pointer(hit, 'pointermove', { pointerType: 'mouse', buttons: 0, clientX: 50 }));
+    expect(tooltipShown(m.svg)).toBe(true);
+  });
+
   it('does not open on a press that moves (a pan)', async () => {
     const m = await mount(360);
     const hit = m.svg.querySelector('rect.reign-hit[data-reign="omri"]')!;
@@ -267,6 +319,18 @@ describe('LabelLayer', () => {
     expect(x()).toBeCloseTo(x0 - 100, 0);
     act(() => void vi.advanceTimersByTime(WHEEL_END_MS));
     expect(m.commits.count).toBe(before + 1);
+  });
+
+  it('letters a forked stream’s name where the fork has reached full width', async () => {
+    const m = await mount(1200);
+    const c = cfg();
+    const v = m.controller.getView();
+    const fork = data.index.streams.find((s) => s.id === 'israel')!;
+    expect(fork.parent_stream_id).toBe('united');
+    // The seed's Israel forks at astronomical −930 (931 BC); FORK_YEARS later it is full width.
+    const full = yearToX(-930 + FORK_YEARS, 'scholarly', c);
+    const israel = m.svg.querySelector('text[data-stream-name="israel"]')!;
+    expect(Number(israel.getAttribute('x'))).toBeCloseTo(v.k * full + v.x + 8, 0);
   });
 
   it('puts the stream names in the labels group, inside the visible part of their stream', async () => {
