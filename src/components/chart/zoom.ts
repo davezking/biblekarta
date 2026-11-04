@@ -8,8 +8,12 @@
 //   inertia) at most every COMMIT_EVERY_MS after LONG_GESTURE_MS.
 //
 // Input: wheel zooms around the pointer; Shift + wheel and horizontal trackpad scroll pan;
-// trackpad pinch (wheel + ctrlKey) and touch pinch zoom; mouse and one-finger drags pan. y is
-// always 0, and the SVG has `touch-action: pan-y`, so a vertical swipe still scrolls the page.
+// trackpad pinch (wheel + ctrlKey) and two-finger touch pinch zoom; mouse drags pan. y is always 0.
+//
+// One-finger touch is NOT given to d3: its touchmove handler calls preventDefault(), which would
+// cancel the page's vertical scroll on phones (DR-12). Instead the SVG has `touch-action: pan-y`,
+// so the browser keeps vertical swipes (and sends pointercancel), and the horizontal moves arrive
+// as pointer events, which pan below. Two-finger touches go to d3 for the pinch.
 //
 // Other components move the view only through the ChartController this returns.
 import { select, type Selection } from 'd3-selection';
@@ -104,6 +108,15 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
   };
 
   let wheelActive = false;
+  /** A one-finger touch pan is in progress (handled here, not by d3). */
+  let touchActive = false;
+  /** Pointer id → last clientX, for active touch pointers. */
+  const touches = new Map<number, number>();
+  /** Once two fingers are down, d3 owns the touch sequence until every finger lifts. */
+  let pinchSequence = false;
+  /** A click right after a touch pan is the end of the pan, not a tap. */
+  let suppressClickUntil = 0;
+  const CLICK_AFTER_PAN_MS = 400;
   let wheelTimer: ReturnType<typeof setTimeout> | undefined;
   let gestureStart: number | null = null;
   let lastCommit = 0;
@@ -123,7 +136,11 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
     ])
     .constrain((t) => constrain(t))
     // Wheel is handled below (zoom vs pan); d3 keeps drags, touch and pinch.
-    .filter((e: Event) => e.type !== 'wheel' && !(e as MouseEvent).button)
+    .filter((e: Event) => {
+      if (e.type === 'wheel') return false;
+      if (e.type === 'touchstart') return (e as TouchEvent).touches.length >= 2;
+      return !(e as MouseEvent).button;
+    })
     .on('start', (e: D3ZoomEvent<SVGSVGElement, unknown>) => {
       if (e.sourceEvent && gestureStart === null) gestureStart = now();
     })
@@ -143,7 +160,7 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
     })
     .on('end', () => {
       // Each wheel step is a tiny programmatic gesture; the wheel sequence commits once, below.
-      if (wheelActive) return;
+      if (wheelActive || touchActive) return;
       gestureStart = null;
       commit();
     });
@@ -171,8 +188,57 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
     }, WHEEL_END_MS);
   };
 
+  const endTouchPan = () => {
+    touchActive = false;
+    gestureStart = null;
+    suppressClickUntil = now() + CLICK_AFTER_PAN_MS;
+    commit();
+  };
+  const onPointerDown = (e: PointerEvent) => {
+    if (e.pointerType !== 'touch') return;
+    touches.set(e.pointerId, e.clientX);
+    // A second finger hands the gesture to d3's pinch, which commits at its own end (and keeps
+    // panning with the finger left after the other lifts).
+    if (touches.size > 1) {
+      pinchSequence = true;
+      if (touchActive) {
+        touchActive = false;
+        gestureStart = null;
+      }
+    }
+  };
+  const onPointerMove = (e: PointerEvent) => {
+    const last = touches.get(e.pointerId);
+    if (e.pointerType !== 'touch' || last === undefined) return;
+    touches.set(e.pointerId, e.clientX);
+    const dx = e.clientX - last;
+    if (pinchSequence || touches.size !== 1 || dx === 0) return;
+    if (!touchActive) {
+      touchActive = true;
+      gestureStart = now();
+    }
+    behavior.translateBy(sel, dx / zoomTransform(o.svg).k, 0);
+  };
+  const onPointerEnd = (e: PointerEvent) => {
+    if (!touches.delete(e.pointerId)) return;
+    if (touches.size > 0) return;
+    pinchSequence = false;
+    if (touchActive) endTouchPan();
+  };
+  const onClickCapture = (e: Event) => {
+    if (now() < suppressClickUntil) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  };
+
   sel.call(behavior);
   o.svg.addEventListener('wheel', onWheel, { passive: false });
+  o.svg.addEventListener('pointerdown', onPointerDown);
+  o.svg.addEventListener('pointermove', onPointerMove);
+  o.svg.addEventListener('pointerup', onPointerEnd);
+  o.svg.addEventListener('pointercancel', onPointerEnd);
+  o.svg.addEventListener('click', onClickCapture, { capture: true });
   // d3 binds dblclick zoom; a double tap on an item should only select it.
   sel.on('dblclick.zoom', null);
 
@@ -218,6 +284,11 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
     destroy: () => {
       clearTimeout(wheelTimer);
       o.svg.removeEventListener('wheel', onWheel);
+      o.svg.removeEventListener('pointerdown', onPointerDown);
+      o.svg.removeEventListener('pointermove', onPointerMove);
+      o.svg.removeEventListener('pointerup', onPointerEnd);
+      o.svg.removeEventListener('pointercancel', onPointerEnd);
+      o.svg.removeEventListener('click', onClickCapture, { capture: true });
       sel.interrupt();
       sel.on('.zoom', null);
     },
