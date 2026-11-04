@@ -1,0 +1,19 @@
+{
+  "id": "other",
+  "slug": "other",
+  "name_am": "ሌላ",
+  "name_en": "Other",
+  "kind": "lane",
+  "fill_color": "#8FB0C4",
+  "lane_order": 2,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -1000,
+        "traditional": 4000
+      },
+      "width": 2
+    }
+  ],
+  "canon": "ethiopian_81"
+}

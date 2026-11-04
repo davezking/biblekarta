@@ -1,0 +1,22 @@
+{
+  "id": "e-seed",
+  "slug": "e-seed",
+  "title_am": "ክስተት",
+  "title_en": "Event",
+  "stream_id": "river",
+  "type": "point",
+  "date_scholarly": {
+    "start": -930,
+    "certainty": "exact",
+    "method": "anchor"
+  },
+  "date_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "importance": 3,
+  "refs": [],
+  "canon": "shared",
+  "fixture": true
+}

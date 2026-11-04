@@ -1,0 +1,29 @@
+{
+  "id": "r-two",
+  "person_id": "p-two",
+  "stream_id": "river",
+  "coregency_flag": false,
+  "start_scholarly": {
+    "start": -960,
+    "certainty": "approximate",
+    "method": "anchor"
+  },
+  "end_scholarly": {
+    "start": -940,
+    "certainty": "approximate",
+    "method": "anchor"
+  },
+  "start_traditional": {
+    "start": 4045,
+    "certainty": "tradition_only",
+    "method": "traditional",
+    "source_id": "src-a"
+  },
+  "end_traditional": {
+    "start": 4060,
+    "certainty": "tradition_only",
+    "method": "traditional",
+    "source_id": "src-a"
+  },
+  "canon": "shared"
+}

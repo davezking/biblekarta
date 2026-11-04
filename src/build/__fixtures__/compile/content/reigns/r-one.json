@@ -1,0 +1,31 @@
+{
+  "id": "r-one",
+  "person_id": "p-one",
+  "stream_id": "river",
+  "coregency_flag": false,
+  "start_scholarly": {
+    "start": -990,
+    "certainty": "exact",
+    "method": "derived",
+    "anchor_id": "anc-a",
+    "anchor_value_used": -950
+  },
+  "end_scholarly": {
+    "start": -960,
+    "certainty": "exact",
+    "method": "derived",
+    "anchor_id": "anc-a",
+    "anchor_value_used": -950
+  },
+  "start_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "end_traditional": {
+    "certainty": "tradition_only",
+    "method": "relative",
+    "relative_text_am": "TBD"
+  },
+  "canon": "shared"
+}

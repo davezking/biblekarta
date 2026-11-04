@@ -1,0 +1,12 @@
+{
+  "id": "p-two",
+  "slug": "p-two",
+  "name_am": "ሰው",
+  "name_en": "Person",
+  "aliases": [],
+  "figure_kind": "king",
+  "importance": 3,
+  "stream_id": "river",
+  "refs": [],
+  "canon": "shared"
+}

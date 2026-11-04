@@ -1,0 +1,69 @@
+/* Events, people spans and in-stream figures (Board 5). Colours and lines come from tokens.css;
+   title inks are set per fill in the layers. Lettering is Abyssinica, never bold. */
+
+/* A person's own span: a pill a shade darker than its stream. */
+.person-pill {
+  fill: var(--vellum-shade);
+  stroke: var(--ink);
+  stroke-width: var(--line-hairline);
+  vector-effect: non-scaling-stroke;
+}
+
+/* A span event: a thin ink bar. */
+.event-bar {
+  fill: var(--ink);
+  stroke: none;
+}
+
+/* Approximate: a dashed outline (Board 5's ግምታዊ ዘመን). */
+.item-dashed {
+  stroke: var(--ink);
+  stroke-width: var(--line-hairline);
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.event-bar.item-dashed {
+  fill: var(--vellum-shade);
+}
+
+.chart-items text {
+  font-family: var(--font-manuscript);
+  font-weight: 400;
+  pointer-events: none;
+}
+
+.item-mark {
+  font-size: var(--font-size-xs);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+/* A person known by one date only (Board 5: Ahijah). */
+.item-dot {
+  fill: var(--harag-red, #a52119);
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+.item-title-name {
+  font-size: 16px;
+}
+
+.item-title-years {
+  font-size: var(--font-size-xs);
+}
+
+/* Transparent, ≥ 44 px tap and hover target. No callout on long-press (iOS). */
+.item-hit {
+  fill: transparent;
+  stroke: none;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+}
+
+/* Figures are decoration: taps go through to the segment under them. */
+.chart-figures,
+.chart-figures * {
+  pointer-events: none;
+}

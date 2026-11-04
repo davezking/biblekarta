@@ -1,0 +1,18 @@
+{
+  "id": "late",
+  "slug": "late",
+  "name_am": "ኋላ",
+  "name_en": "Late",
+  "start": {
+    "scholarly": -950,
+    "traditional": 4050
+  },
+  "end": {
+    "scholarly": -901,
+    "traditional": 4099
+  },
+  "certainty": "anchored",
+  "status": "live",
+  "order": 2,
+  "canon": "shared"
+}

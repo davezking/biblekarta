@@ -1,0 +1,108 @@
+/* Minimap strip (Board 5). Colours, sizes and lines come from tokens.css. */
+
+.minimap {
+  width: 100%;
+  min-width: 0;
+}
+
+.minimap-title {
+  margin: 0 0 var(--space-xs);
+  text-align: center;
+  font-family: var(--font-manuscript);
+  font-size: var(--font-size-sm);
+  color: var(--ink);
+}
+
+.minimap-strip {
+  position: relative;
+  width: 100%;
+  /* Hit areas: every era box and the window are the strip's full height (≥ 44 px). */
+  height: calc(var(--touch-target) + var(--space-sm));
+  overflow: hidden;
+  border: var(--line-outline) solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--vellum);
+}
+
+.minimap-era {
+  position: absolute;
+  inset-block: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  margin: 0;
+  padding: 0 2px;
+  overflow: hidden;
+  border: none;
+  border-inline-end: var(--line-hairline) solid var(--ink-axis);
+  background: transparent;
+  font-family: var(--font-manuscript);
+  font-size: var(--font-size-xs);
+  line-height: 1.15;
+  text-align: center;
+}
+
+.minimap-era:last-of-type {
+  border-inline-end: none;
+}
+
+.minimap-era-name {
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.minimap-era.is-live {
+  color: var(--ink);
+  background: var(--harag-yellow);
+  cursor: pointer;
+}
+
+/* Coming soon: faded ground and dashed divider, text still at full contrast (≥ 4.5:1). */
+.minimap-era.is-soon {
+  color: var(--ink-axis);
+  background: var(--vellum-wash);
+  border-inline-end-style: dashed;
+  cursor: default;
+}
+
+.minimap-soon {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xs);
+  color: var(--ink-red);
+  /* Hidden by opacity (not by the visibility property), so it stays in the accessibility tree, so screen readers
+     read "coming soon" with the era's name. */
+  opacity: 0;
+}
+
+.minimap-era.is-soon:hover .minimap-soon,
+.minimap-era.is-soon:focus-visible .minimap-soon {
+  opacity: 1;
+}
+
+.minimap-era:focus-visible,
+.minimap-window:focus-visible {
+  outline: var(--line-strong) solid var(--ink-red);
+  outline-offset: -3px;
+}
+
+.minimap-window {
+  position: absolute;
+  inset-block: 0;
+  box-sizing: border-box;
+  border: var(--line-strong) solid var(--ink-red);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: grab;
+  /* The drag is ours: no page scroll or browser gesture while it moves. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.minimap-window:active {
+  cursor: grabbing;
+}

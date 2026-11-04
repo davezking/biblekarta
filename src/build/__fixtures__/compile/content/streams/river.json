@@ -1,0 +1,19 @@
+{
+  "id": "river",
+  "slug": "river",
+  "name_am": "ወንዝ",
+  "name_en": "River",
+  "kind": "polity",
+  "fill_color": "#E2B54F",
+  "lane_order": 1,
+  "width_keyframes": [
+    {
+      "at": {
+        "scholarly": -1000,
+        "traditional": 4000
+      },
+      "width": 2
+    }
+  ],
+  "canon": "shared"
+}
