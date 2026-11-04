@@ -110,9 +110,11 @@ describe('Chart', () => {
     expect(svg.querySelectorAll('rect.chart-selection')).toHaveLength(0);
   });
 
-  it('mounts every layer group, the toolbar and an accessible label', async () => {
+  it('mounts every layer group, the figure sprite, the toolbar and an accessible label', async () => {
     const { svg } = await render();
+    // The figure sprite (P2-S1-T3) is mounted once, first, by FigureSpriteMount.
     expect([...svg.children].map((c) => c.getAttribute('class')).filter(Boolean)).toEqual([
+      'figure-sprite',
       'chart-grid',
       'chart-geometry',
       'chart-labels',
