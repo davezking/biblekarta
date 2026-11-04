@@ -10,7 +10,15 @@ import type { ChartData } from '../data/useChartData';
 import { seedChartData } from '../seed-data.testutil';
 import { createChartStore, type ChartStore } from '../state';
 import { WHEEL_END_MS, type ChartController } from '../zoom';
-import { axisLabels, captionText, LABEL_PAD_PX, placeRow } from './AxisLayer';
+import { AXIS_BAND_PX } from '../geometry';
+import {
+  axisLabels,
+  captionText,
+  hasBottomRow,
+  LABEL_FONT_PX,
+  LABEL_PAD_PX,
+  placeRow,
+} from './AxisLayer';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -77,6 +85,18 @@ const shown = (svg: SVGSVGElement, row: 'top' | 'bottom') =>
   [...svg.querySelectorAll(`g.axis-${row} text.axis-label`)].filter(
     (el) => el.getAttribute('visibility') !== 'hidden',
   );
+/**
+ * Whether any text (labels and captions) on the bottom row reaches up into the top row's text:
+ * a glyph spans about one font size above its baseline.
+ */
+function rowsOverlap(svg: SVGSVGElement): boolean {
+  const ys = (row: 'top' | 'bottom') =>
+    [...svg.querySelectorAll(`g.axis-${row} text`)].map((el) => Number(el.getAttribute('y')));
+  const top = ys('top');
+  const bottom = ys('bottom');
+  if (top.length === 0 || bottom.length === 0) return false;
+  return Math.min(...bottom) - LABEL_FONT_PX < Math.max(...top);
+}
 const bc = (el: Element) => 1 - Number(el.getAttribute('data-year'));
 
 function wheel(svg: SVGSVGElement, init: WheelEventInit) {
@@ -230,15 +250,64 @@ describe('AxisLayer', () => {
     const m = await mount(1200);
     await act(async () => m.store.setAxis('traditional'));
     frame();
-    const bottom = shown(m.svg, 'bottom');
-    expect(bottom.length).toBeGreaterThan(0);
-    for (const el of bottom) expect(el.textContent).toBe(el.getAttribute('data-year'));
+    // Every seed traditional date is TBD, so this axis has no lanes and no room for the bottom row.
+    expect(m.svg.querySelector('g.axis-bottom')).toBeNull();
+    expect(rowsOverlap(m.svg)).toBe(false);
+    expect(shown(m.svg, 'top').length).toBeGreaterThan(0);
     for (const el of shown(m.svg, 'top')) {
       expect(fromGeez(el.textContent!)).toBe(Number(el.getAttribute('data-year')));
     }
     expect(m.svg.querySelector('text.axis-caption')!.textContent).toBe(
       t('axis.traditional.prefix'),
     );
+  });
+});
+
+describe('AxisLayer with no lane area', () => {
+  it('keeps the two rows apart when every lane is hidden, and restores the bottom row', async () => {
+    const m = await mount(1200);
+    expect(shown(m.svg, 'bottom').length).toBeGreaterThan(0);
+    expect(rowsOverlap(m.svg)).toBe(false);
+    const lanes = data.index.layout!.scholarly.lanes.map((l) => l.id);
+    expect(lanes.length).toBeGreaterThan(0);
+
+    await act(async () => m.store.setHiddenLanes(lanes));
+    frame();
+    expect(rowsOverlap(m.svg)).toBe(false);
+    expect(m.svg.querySelector('g.axis-bottom')).toBeNull();
+    expect(m.svg.querySelectorAll('text.axis-caption')).toHaveLength(1);
+    expect(shown(m.svg, 'top').length).toBeGreaterThan(0);
+
+    // A gesture still re-places the top row imperatively, with no React commit.
+    act(() => {
+      m.controller.setView({ x: -2000, k: 3 });
+      vi.advanceTimersByTime(20);
+    });
+    const before = m.commits.count;
+    const first = shown(m.svg, 'top')[0]!;
+    const x0 = Number(first.getAttribute('x'));
+    for (let i = 0; i < 5; i++) {
+      act(() => {
+        wheel(m.svg, { deltaY: 10, shiftKey: true });
+        vi.advanceTimersByTime(20);
+      });
+    }
+    expect(Number(first.getAttribute('x'))).toBeCloseTo(x0 - 50, 0);
+    expect(m.commits.count).toBe(before);
+    act(() => void vi.advanceTimersByTime(WHEEL_END_MS));
+
+    // Showing the lanes again brings the bottom row back, placed and clear of the top row.
+    await act(async () => m.store.setHiddenLanes([]));
+    frame();
+    expect(shown(m.svg, 'bottom').length).toBeGreaterThan(0);
+    expect(shown(m.svg, 'bottom').every((el) => el.hasAttribute('x'))).toBe(true);
+    expect(rowsOverlap(m.svg)).toBe(false);
+  });
+
+  it('draws the bottom row only when it fits below the axis band', () => {
+    expect(hasBottomRow(AXIS_BAND_PX)).toBe(false);
+    expect(hasBottomRow(AXIS_BAND_PX + LABEL_FONT_PX)).toBe(false);
+    expect(hasBottomRow(AXIS_BAND_PX + 100)).toBe(true);
   });
 });
 

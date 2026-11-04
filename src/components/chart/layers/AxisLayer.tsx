@@ -41,6 +41,12 @@ export const LABEL_FONT_PX = 13;
 export const TOP_BASELINE_PX = AXIS_BAND_PX - 12;
 /** The bottom row's baseline sits this far above the chart's bottom edge. */
 export const BOTTOM_INSET_PX = 8;
+/**
+ * The least lane area (below the axis band) that has room for the bottom row: a label's height,
+ * its inset and a small gap. With less (no lanes on this axis, or every lane hidden), the bottom
+ * row would sit on the top row, so it is not drawn.
+ */
+export const MIN_BOTTOM_BAND_PX = LABEL_FONT_PX + BOTTOM_INSET_PX + 4;
 const CAPTION_X_PX = 4;
 
 const LEVEL_RANK: Record<TickLevel, number> = { century: 0, half: 1, decade: 2, year: 3 };
@@ -196,9 +202,9 @@ function usePlacement(
   t: T,
 ) {
   // After each render (a new tick set), measure the labels once and place them; then follow the
-  // live viewport imperatively until the next gesture end.
+  // live viewport imperatively until the next gesture end. A row that is not drawn has no node.
   useLayoutEffect(() => {
-    const rows = refs.map((r) => rowOf(r.current!));
+    const rows = refs.flatMap((r) => (r.current ? [rowOf(r.current)] : []));
     const captionWidths: CaptionWidths = new Map();
     const place = (v: Viewport) => placeAll(rows, labels, v, axis, t, captionWidths);
     const v = viewport.get() ?? committed;
@@ -226,10 +232,17 @@ function usePlacement(
   }, [refs, labels, viewport, committed, axis, t]);
 }
 
+/** Whether the bottom row fits below the axis band without overlapping the top row. */
+export function hasBottomRow(height: number): boolean {
+  return height - AXIS_BAND_PX >= MIN_BOTTOM_BAND_PX;
+}
+
 export default function AxisLayer({ axis, cfg, viewport, committed, height, t }: LayerProps) {
   const top = useRef<SVGGElement>(null);
   const bottom = useRef<SVGGElement>(null);
-  const refs = useMemo(() => [top, bottom], []);
+  const showBottom = hasBottomRow(height);
+  // A new array when the bottom row appears or goes, so the placement effect picks up its node.
+  const refs = useMemo(() => (showBottom ? [top, bottom] : [top]), [showBottom]);
   const labels = useMemo(
     () => (committed ? axisLabels(axis, committed, cfg, t) : []),
     [axis, committed, cfg, t],
@@ -252,14 +265,16 @@ export default function AxisLayer({ axis, cfg, viewport, committed, height, t }:
           </text>
         ))}
       </g>
-      <g ref={bottom} className="axis-row axis-bottom">
-        <text className="axis-caption" x={CAPTION_X_PX} y={bottomY} />
-        {labels.map((l) => (
-          <text key={l.year} className="axis-label" data-year={l.year} y={bottomY}>
-            {l.arabic}
-          </text>
-        ))}
-      </g>
+      {showBottom && (
+        <g ref={bottom} className="axis-row axis-bottom">
+          <text className="axis-caption" x={CAPTION_X_PX} y={bottomY} />
+          {labels.map((l) => (
+            <text key={l.year} className="axis-label" data-year={l.year} y={bottomY}>
+              {l.arabic}
+            </text>
+          ))}
+        </g>
+      )}
     </g>
   );
 }
