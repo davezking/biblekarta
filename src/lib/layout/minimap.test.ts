@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TimescaleConfig } from './timescale';
 import {
   baseToMinimap,
+  dragView,
   boxSpan,
   minimapLayout,
   minimapToBase,
@@ -161,6 +162,24 @@ describe('view ↔ window', () => {
         expect(back.x).toBeCloseTo(view.x, 6);
       }
     }
+  });
+
+  it('drags from a centre in a margin by the distance dragged, without a jump', () => {
+    // Centre at base 40, before the first live span (x0 = 100): the strip clamps it to 200 px.
+    const start = { x: 200 - 40 * 2, k: 2, width: 400 };
+    expect(viewCentreToMinimap(start, L, 'scholarly')).toBe(200);
+    // 1 px in box b (100 px for 400 base) is 4 base x: the centre moves 40 → 44, not to 104.
+    const v = dragView(start, 1, L, 'scholarly')!;
+    expect((400 / 2 - v.x) / v.k).toBeCloseTo(44, 9);
+    expect(v.k).toBe(2);
+    // Back to the start, and further left (already at the end), the centre stays put.
+    expect(dragView(start, 0, L, 'scholarly')!.x).toBe(start.x);
+    expect(dragView(start, -30, L, 'scholarly')!.x).toBe(start.x);
+    // Inside the spans, the drag matches mapping the strip px back.
+    const mid = { x: 200 - 300 * 2, k: 2, width: 400 };
+    const w = dragView(mid, 25, L, 'scholarly')!;
+    expect(w.x).toBeCloseTo(minimapToView(275, L, 'scholarly', 2, 400)!.x, 9);
+    expect(dragView(start, 1, minimapLayout([], 100), 'scholarly')).toBeNull();
   });
 
   it('clamps a drag past the ends to the first and last live span', () => {

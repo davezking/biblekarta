@@ -21,8 +21,8 @@ import {
 } from 'react';
 import {
   boxSpan,
+  dragView,
   minimapLayout,
-  minimapToView,
   viewCentreToMinimap,
   viewToMinimap,
   type MinimapLayout,
@@ -108,9 +108,7 @@ export default function Minimap({ store, controller, viewport, index, t }: Contr
   useLayoutEffect(place);
 
   // Dragging the window.
-  const drag = useRef<{ id: number; startX: number; lastX: number; startCentre: number } | null>(
-    null,
-  );
+  const drag = useRef<{ id: number; startX: number; lastX: number; start: Viewport } | null>(null);
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     const v = currentViewport();
     if (!controller || !v || e.button > 0) return;
@@ -124,15 +122,14 @@ export default function Minimap({ store, controller, viewport, index, t }: Contr
       id: e.pointerId,
       startX: e.clientX,
       lastX: e.clientX,
-      startCentre: viewCentreToMinimap(v, layout, s.axis),
+      start: v,
     };
   };
   const moveTo = (clientX: number, commit: boolean) => {
     const d = drag.current;
-    const v = currentViewport();
-    if (!d || !controller || !v) return;
+    if (!d || !controller) return;
     d.lastX = clientX;
-    const next = minimapToView(d.startCentre + clientX - d.startX, layout, s.axis, v.k, v.width);
+    const next = dragView(d.start, clientX - d.startX, layout, s.axis);
     if (next) controller.setView(next, { live: !commit });
     place();
   };

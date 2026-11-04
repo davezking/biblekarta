@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { readFileSync } from 'node:fs';
 import { act, createElement, Profiler } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -180,6 +181,27 @@ describe('Minimap', () => {
     expect(m.store.getSnapshot().committedViewport).toMatchObject({ x: moved.x, k: moved.k });
   });
 
+  it('drags smoothly from the left end on a phone, where the view centre is in the margin', async () => {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(390);
+    const m = await mount();
+    const cfg = data.index.timescale!;
+    const k = cfg.zoom.kMax;
+    act(() => m.controller.setView({ x: 0, k }));
+    const content = liveEra().x.scholarly!;
+    // The centre is before the live span (the domain's margin)…
+    expect(195 / k).toBeLessThan(content.x0);
+    const box = m.era(liveEra().slug);
+    const boxWidth = px(box.style.width);
+    await act(async () => {
+      pointer(m.win, 'pointerdown', 100);
+      pointer(m.win, 'pointermove', 101);
+    });
+    // …so 1 strip px moves the chart by 1 px worth of the live span, not to the span's start.
+    const moved = -m.controller.getView().x;
+    expect(moved).toBeCloseTo(((content.x1 - content.x0) / boxWidth) * k, 3);
+    await act(async () => pointer(m.win, 'pointerup', 101));
+  });
+
   it('clamps a drag past the end of the strip to the end of the chart', async () => {
     const m = await mount();
     act(() => m.controller.setView({ x: 0, k: 4 }));
@@ -225,5 +247,14 @@ describe('Minimap', () => {
     const w = expectedWindow(m.controller, 'traditional');
     expect(m.win.style.display).toBe('');
     expect(px(m.win.style.left)).toBeCloseTo(w.left, 3);
+  });
+
+  it('keeps "coming soon" readable by screen readers (hidden by opacity, not visibility)', async () => {
+    const m = await mount();
+    expect(m.era('before').textContent).toContain('በቅርቡ');
+    const css = readFileSync('src/components/chart/controls/minimap.css', 'utf8');
+    const rule = /\.minimap-soon\s*\{([^}]*)\}/.exec(css)![1]!;
+    expect(rule).toMatch(/opacity:\s*0/);
+    expect(css).not.toMatch(/visibility\s*:|display:\s*none/);
   });
 });

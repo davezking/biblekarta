@@ -57,7 +57,7 @@
 
 .minimap-era.is-live {
   color: var(--ink);
-  background: var(--pigment-israel);
+  background: var(--harag-yellow);
   cursor: pointer;
 }
 
@@ -73,12 +73,14 @@
   font-family: var(--font-ui);
   font-size: var(--font-size-xs);
   color: var(--ink-red);
-  visibility: hidden;
+  /* Hidden by opacity (not by the visibility property), so it stays in the accessibility tree, so screen readers
+     read "coming soon" with the era's name. */
+  opacity: 0;
 }
 
 .minimap-era.is-soon:hover .minimap-soon,
 .minimap-era.is-soon:focus-visible .minimap-soon {
-  visibility: visible;
+  opacity: 1;
 }
 
 .minimap-era:focus-visible,

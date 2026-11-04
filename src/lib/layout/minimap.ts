@@ -188,3 +188,21 @@ export function minimapToView(
 export function viewCentreToMinimap(view: ChartView, layout: MinimapLayout, axis: Axis): number {
   return baseToMinimap((view.width / 2 - view.x) / view.k, layout, axis);
 }
+
+/**
+ * The view after dragging the window `dx` strip px from where a drag started on `start`. The
+ * chart moves by the base-x distance the strip covers between the start and the pointer, from
+ * the view's real centre: a centre in a margin (clamped on the strip) moves smoothly instead of
+ * jumping to the first or last live span. Null with no live span.
+ */
+export function dragView(
+  start: ChartView,
+  dx: number,
+  layout: MinimapLayout,
+  axis: Axis,
+): { x: number; k: number } | null {
+  const startPx = viewCentreToMinimap(start, layout, axis);
+  const delta = minimapToBase(startPx + dx, layout, axis) - minimapToBase(startPx, layout, axis);
+  if (!Number.isFinite(delta)) return null;
+  return { x: start.x - delta * start.k, k: start.k };
+}
