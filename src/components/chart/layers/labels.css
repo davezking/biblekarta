@@ -1,0 +1,71 @@
+/* Reign segments and dividers (geometry group) and the chart's lettering (labels group): DR-3.
+   Colours, lines and fonts come from tokens.css; label inks are set per fill in LabelLayer. */
+
+.reign-fill {
+  fill: none;
+  stroke: none;
+  vector-effect: non-scaling-stroke;
+}
+
+/* An approximate reign: a dashed outline. */
+.reign-dashed {
+  stroke: var(--ink);
+  stroke-width: var(--line-hairline);
+  stroke-dasharray: 4 3;
+}
+
+.reign-divider {
+  stroke: var(--ink);
+  stroke-width: var(--line-hairline);
+  vector-effect: non-scaling-stroke;
+}
+
+/* Transparent, ≥ 44 px tall tap and hover target. No callout on long-press (iOS). */
+.reign-hit {
+  fill: transparent;
+  stroke: none;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+}
+
+/* Manuscript lettering: Abyssinica, never bold. Taps go through to the hit targets. */
+.chart-names text {
+  font-family: var(--font-manuscript);
+  font-weight: 400;
+  pointer-events: none;
+}
+
+.reign-name {
+  font-size: 16px;
+  text-anchor: middle;
+}
+
+.reign-years {
+  font-size: var(--font-size-xs);
+  text-anchor: middle;
+}
+
+.stream-name {
+  font-size: 16px;
+  text-anchor: start;
+}
+
+.chart-tooltip {
+  pointer-events: none;
+}
+
+.chart-tooltip rect {
+  fill: var(--vellum);
+  stroke: var(--ink);
+  stroke-width: var(--line-hairline);
+}
+
+.chart-tooltip .tooltip-name {
+  font-size: 16px;
+  fill: var(--ink);
+}
+
+.chart-tooltip .tooltip-years {
+  font-size: var(--font-size-xs);
+  fill: var(--ink-brown);
+}
