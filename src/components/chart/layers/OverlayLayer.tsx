@@ -2,6 +2,8 @@
 // red ink). Mounted in the x-scaled overlay group, so it draws in base coordinates with a
 // non-scaling stroke.
 import { ROW_HEIGHT_PX, rowY, type StreamBand } from '../../../lib/layout/streams';
+import { touchTarget } from '../../../lib/core/tokens';
+import { slotOf, topLaneSlot } from './EventLayer';
 import type { LayerProps } from './types';
 
 export interface Outline {
@@ -27,18 +29,26 @@ export function selectionOutlines(p: LayerProps): Outline[] {
     }
     return { x0, x1, y0: top + band.cy - band.height / 2, y1: top + band.cy + band.height / 2 };
   };
+  const itemBox = (m: { stream_id: string | null; x0: number; x1: number; row: number }) => {
+    const slot = slotOf(p, m) ?? (m.stream_id ? null : topLaneSlot(p));
+    if (!slot) return null;
+    // A point (about a year wide) gets an outline at least a touch target wide on screen.
+    const k = p.committed?.k ?? 1;
+    const half = Math.max((m.x1 - m.x0) / 2, touchTarget / 2 / k);
+    const cx = (m.x0 + m.x1) / 2;
+    return { x0: cx - half, x1: cx + half, y0: slot.cy - slot.h / 2, y1: slot.cy + slot.h / 2 };
+  };
   const out: (Outline | null)[] = [];
   if (sel.kind === 'reign') {
     for (const r of geo.reigns)
       if (r.reign_id === sel.id) out.push(box(r.stream_id, r.x0, r.x1, r.row));
   } else if (sel.kind === 'event') {
-    for (const e of geo.events)
-      if (e.event_id === sel.id) out.push(box(e.stream_id, e.x0, e.x1, e.row));
+    // Events and people sit in EventLayer's slots (a polity's rows stack from its lower edge).
+    for (const e of geo.events) if (e.event_id === sel.id) out.push(itemBox(e));
   } else {
     for (const r of geo.reigns)
       if (r.person_id === sel.id) out.push(box(r.stream_id, r.x0, r.x1, r.row));
-    for (const s of geo.people)
-      if (s.person_id === sel.id) out.push(box(s.stream_id, s.x0, s.x1, s.row));
+    for (const s of geo.people) if (s.person_id === sel.id) out.push(itemBox(s));
   }
   return out.filter((o): o is Outline => o !== null);
 }
