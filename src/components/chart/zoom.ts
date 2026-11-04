@@ -51,7 +51,12 @@ export interface View {
 
 export interface ChartController {
   getView: () => View;
-  setView: (view: View, opts?: { animate?: boolean }) => void;
+  /**
+   * Moves the view. With `live`, the move is part of a drag that another control owns (the
+   * minimap): the transform and the viewport channel update, but the store is not committed; the
+   * drag's last setView, without `live`, commits it.
+   */
+  setView: (view: View, opts?: { animate?: boolean; live?: boolean }) => void;
   /** Centres a year on the given axis, keeping the zoom. */
   panToYear: (year: number, axis: Axis) => void;
   /** Zooms and pans so the base-x span [x0, x1] fills the width. */
@@ -108,6 +113,8 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
   };
 
   let wheelActive = false;
+  /** A `live` setView is in progress: its zoom events must not commit. */
+  let liveSet = false;
   /** A one-finger touch pan is in progress (handled here, not by d3). */
   let touchActive = false;
   /** Pointer id → last clientX, for active touch pointers. */
@@ -160,7 +167,7 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
     })
     .on('end', () => {
       // Each wheel step is a tiny programmatic gesture; the wheel sequence commits once, below.
-      if (wheelActive || touchActive) return;
+      if (wheelActive || touchActive || liveSet) return;
       gestureStart = null;
       commit();
     });
@@ -247,7 +254,15 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
   // zoom.transform skips constrain(), so programmatic views are clamped here.
   const setView: ChartController['setView'] = (view, opts = {}) => {
     const t = constrain(zoomIdentity.translate(view.x, 0).scale(clampK(view.k)));
-    if (opts.animate && !reducedMotion()) {
+    if (opts.live) {
+      sel.interrupt();
+      liveSet = true;
+      try {
+        sel.call(behavior.transform, t);
+      } finally {
+        liveSet = false;
+      }
+    } else if (opts.animate && !reducedMotion()) {
       sel.transition().duration(motion.slow).call(behavior.transform, t);
     } else {
       sel.call(behavior.transform, t);
