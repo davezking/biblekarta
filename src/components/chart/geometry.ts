@@ -6,10 +6,16 @@ import type { Lane } from '../../lib/layout/streams';
 /** Space above the first lane for the year axis (AxisLayer, P2-S2-T5). */
 export const AXIS_BAND_PX = 36;
 
+/**
+ * Space below the last lane for the axis's bottom row (AxisLayer): a label (13 px), its 8 px inset
+ * from the bottom edge and a small gap above, so the row never sits on the last lane.
+ */
+export const AXIS_BOTTOM_PX = 28;
+
 export interface LanePlacement {
   /** Top y of each visible lane; hidden lanes are absent. */
   laneY: Map<string, number>;
-  /** SVG height: the axis band plus the visible lanes. */
+  /** SVG height: the top axis band, the visible lanes and the bottom axis band. */
   height: number;
 }
 
@@ -22,5 +28,5 @@ export function placeLanes(lanes: readonly Lane[], hidden: readonly string[]): L
     laneY.set(lane.id, y);
     y += lane.height;
   }
-  return { laneY, height: y };
+  return { laneY, height: y + AXIS_BOTTOM_PX };
 }

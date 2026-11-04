@@ -49,7 +49,7 @@
   fill: var(--ink-red);
 }
 
-/* The bottom row sits over the last lane: a vellum halo keeps it legible over the streams. */
+/* The bottom row has its own band below the last lane; a vellum halo keeps it clear of the grid lines. */
 .axis-bottom text {
   paint-order: stroke;
   stroke: var(--vellum);

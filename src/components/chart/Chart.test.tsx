@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import Chart from './Chart';
 import type { ChartData } from './data/useChartData';
-import { AXIS_BAND_PX, placeLanes } from './geometry';
+import { AXIS_BAND_PX, AXIS_BOTTOM_PX, placeLanes } from './geometry';
 import { seedChartData } from './seed-data.testutil';
 import { createChartStore, type ChartStore } from './state';
 
@@ -83,10 +83,10 @@ describe('Chart', () => {
     expect(Number(svg.getAttribute('height'))).toBe(placeLanes(lanes, ['sidon']).height);
   });
 
-  it('places the first lane under the axis band', () => {
+  it('places the lanes between the top and bottom axis bands', () => {
     const { laneY, height } = placeLanes(data.index.layout!.scholarly.lanes, []);
     expect(laneY.get('prophets')).toBe(AXIS_BAND_PX);
-    expect(height).toBeCloseTo(AXIS_BAND_PX + data.index.layout!.scholarly.height);
+    expect(height).toBeCloseTo(AXIS_BAND_PX + data.index.layout!.scholarly.height + AXIS_BOTTOM_PX);
   });
 
   it('selects an item tapped through data-select, and outlines it in red', async () => {
