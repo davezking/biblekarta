@@ -39,7 +39,10 @@ export const LABEL_PAD_PX = 8;
 export const LABEL_FONT_PX = 13;
 /** Baseline of the top row (inside the axis band above the first lane). */
 export const TOP_BASELINE_PX = AXIS_BAND_PX - 12;
-/** The bottom row's baseline sits this far above the chart's bottom edge. */
+/**
+ * The bottom row's baseline sits this far above the chart's bottom edge, inside the bottom axis
+ * band that placeLanes reserves below the last lane (AXIS_BOTTOM_PX in ../geometry).
+ */
 export const BOTTOM_INSET_PX = 8;
 const CAPTION_X_PX = 4;
 

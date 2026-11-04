@@ -10,7 +10,8 @@ import type { ChartData } from '../data/useChartData';
 import { seedChartData } from '../seed-data.testutil';
 import { createChartStore, type ChartStore } from '../state';
 import { WHEEL_END_MS, type ChartController } from '../zoom';
-import { axisLabels, captionText, LABEL_PAD_PX, placeRow } from './AxisLayer';
+import { AXIS_BAND_PX } from '../geometry';
+import { axisLabels, captionText, LABEL_FONT_PX, LABEL_PAD_PX, placeRow } from './AxisLayer';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -239,6 +240,45 @@ describe('AxisLayer', () => {
     expect(m.svg.querySelector('text.axis-caption')!.textContent).toBe(
       t('axis.traditional.prefix'),
     );
+  });
+});
+
+describe('AxisLayer bottom row', () => {
+  /** The lowest lane bottom edge, from the lane groups' translate and the layout's heights. */
+  function lastLaneBottom(svg: SVGSVGElement): number {
+    const heights = new Map(data.index.layout!.scholarly.lanes.map((l) => [l.id, l.height]));
+    let bottom = AXIS_BAND_PX;
+    for (const g of svg.querySelectorAll('g[data-lane]')) {
+      const y = Number(/translate\(0,([-\d.]+)\)/.exec(g.getAttribute('transform')!)![1]);
+      bottom = Math.max(bottom, y + heights.get(g.getAttribute('data-lane')!)!);
+    }
+    return bottom;
+  }
+  /** The top of the bottom row's glyphs: a glyph reaches about one font size above its baseline. */
+  const bottomRowTop = (svg: SVGSVGElement) =>
+    Math.min(
+      ...[...svg.querySelectorAll('g.axis-bottom text')].map(
+        (el) => Number(el.getAttribute('y')) - LABEL_FONT_PX,
+      ),
+    );
+
+  it('sits below the last lane, also with lanes hidden, inside the SVG', async () => {
+    const m = await mount(390);
+    const lanes = data.index.layout!.scholarly.lanes.map((l) => l.id);
+    const check = () => {
+      const height = Number(m.svg.getAttribute('height'));
+      expect(bottomRowTop(m.svg)).toBeGreaterThanOrEqual(lastLaneBottom(m.svg));
+      for (const el of m.svg.querySelectorAll('g.axis-bottom text')) {
+        expect(Number(el.getAttribute('y'))).toBeLessThan(height);
+      }
+      // Never on top of the top row either.
+      expect(bottomRowTop(m.svg)).toBeGreaterThan(AXIS_BAND_PX - 12);
+    };
+    check();
+    await act(async () => m.store.setHiddenLanes([lanes.at(-1)!]));
+    check();
+    await act(async () => m.store.setHiddenLanes(lanes));
+    check();
   });
 });
 
