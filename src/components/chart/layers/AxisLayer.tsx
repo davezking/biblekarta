@@ -149,13 +149,31 @@ function rowOf(g: SVGGElement): Row {
   return { g, caption, texts, widths: texts.map(measure) };
 }
 
-function placeAll(rows: Row[], labels: readonly AxisLabel[], v: Viewport, axis: Axis, t: T): void {
+/** Caption text → its rendered width, so a gesture frame does not force a layout to measure it. */
+type CaptionWidths = Map<string, number>;
+
+function placeAll(
+  rows: Row[],
+  labels: readonly AxisLabel[],
+  v: Viewport,
+  axis: Axis,
+  t: T,
+  captionWidths: CaptionWidths,
+): void {
   // The caption names the era of the first label on screen (scholarly), or the AA prefix.
   const first = labels.find((l) => v.k * l.x + v.x >= 0);
   const caption = captionText(axis, first?.era ?? null, t);
   for (const row of rows) {
     if (row.caption.textContent !== caption) row.caption.textContent = caption;
-    const reserve = CAPTION_X_PX + measure(row.caption);
+  }
+  // Measured once per caption text (both rows share the font), before any label is moved.
+  let captionWidth = captionWidths.get(caption);
+  if (captionWidth === undefined) {
+    captionWidth = measure(rows[0]!.caption);
+    captionWidths.set(caption, captionWidth);
+  }
+  const reserve = CAPTION_X_PX + captionWidth;
+  for (const row of rows) {
     const xs = placeRow(labels, row.widths, v, reserve);
     row.texts.forEach((el, i) => {
       const sx = xs[i];
@@ -181,9 +199,30 @@ function usePlacement(
   // live viewport imperatively until the next gesture end.
   useLayoutEffect(() => {
     const rows = refs.map((r) => rowOf(r.current!));
+    const captionWidths: CaptionWidths = new Map();
+    const place = (v: Viewport) => placeAll(rows, labels, v, axis, t, captionWidths);
     const v = viewport.get() ?? committed;
-    if (v) placeAll(rows, labels, v, axis, t);
-    return viewport.subscribe((next) => placeAll(rows, labels, next, axis, t));
+    if (v) place(v);
+    const unsubscribe = viewport.subscribe(place);
+
+    // Abyssinica loads with font-display: swap, so the chart can hydrate while a fallback font
+    // is drawn. When web fonts finish loading, measure again and re-place.
+    const fonts = typeof document === 'undefined' ? undefined : document.fonts;
+    let live = true;
+    const remeasure = () => {
+      if (!live) return;
+      for (const row of rows) row.widths = row.texts.map(measure);
+      captionWidths.clear();
+      const now = viewport.get() ?? committed;
+      if (now) place(now);
+    };
+    void fonts?.ready?.then(remeasure);
+    fonts?.addEventListener?.('loadingdone', remeasure);
+    return () => {
+      live = false;
+      unsubscribe();
+      fonts?.removeEventListener?.('loadingdone', remeasure);
+    };
   }, [refs, labels, viewport, committed, axis, t]);
 }
 

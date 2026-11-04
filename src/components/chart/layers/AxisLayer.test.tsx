@@ -88,6 +88,15 @@ function wheel(svg: SVGSVGElement, init: WheelEventInit) {
   svg.dispatchEvent(e);
 }
 
+/** The prototype that owns getComputedTextLength (happy-dom has no SVGTextContentElement global). */
+function textProto(): SVGTextContentElement {
+  let p: object | null = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  while (p && !Object.prototype.hasOwnProperty.call(p, 'getComputedTextLength')) {
+    p = Object.getPrototypeOf(p) as object | null;
+  }
+  return p as SVGTextContentElement;
+}
+
 /** Lets the viewport channel's animation frame run. */
 const frame = () => act(() => void vi.advanceTimersByTime(20));
 
@@ -181,6 +190,40 @@ describe('AxisLayer', () => {
     act(() => void vi.advanceTimersByTime(WHEEL_END_MS));
     expect(m.commits.count).toBe(before + 1);
     expect(Number(label().getAttribute('x'))).toBeCloseTo(x0 - 100, 0);
+  });
+
+  it('measures labels again when web fonts finish loading', async () => {
+    // Before the font loads, the fallback draws every label wide; afterwards they are narrow.
+    let width = 200;
+    vi.spyOn(textProto(), 'getComputedTextLength').mockImplementation(() => width);
+    const fonts = Object.assign(new EventTarget(), { ready: new Promise<void>(() => {}) });
+    Object.defineProperty(document, 'fonts', { value: fonts, configurable: true });
+    try {
+      const m = await mount(1200);
+      const wide = shown(m.svg, 'bottom').length;
+      width = 20;
+      act(() => void fonts.dispatchEvent(new Event('loadingdone')));
+      expect(shown(m.svg, 'bottom').length).toBeGreaterThan(wide);
+    } finally {
+      delete (document as { fonts?: unknown }).fonts;
+    }
+  });
+
+  it('measures the caption once per text, not on every gesture frame', async () => {
+    const m = await mount(1200);
+    const spy = vi.spyOn(textProto(), 'getComputedTextLength').mockReturnValue(20);
+    act(() => {
+      m.controller.setView({ x: -2000, k: 3 });
+      vi.advanceTimersByTime(20);
+    });
+    spy.mockClear();
+    for (let i = 0; i < 10; i++) {
+      act(() => {
+        wheel(m.svg, { deltaY: 10, shiftKey: true });
+        vi.advanceTimersByTime(20);
+      });
+    }
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('shows AA years with the traditional prefix on the traditional axis', async () => {
