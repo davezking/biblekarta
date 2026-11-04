@@ -30,8 +30,18 @@ export interface ReignBox {
 }
 
 /**
+ * Whether a reign fills a packed row rather than the stream's full width. A polity's reigns are
+ * fixed at row 0 and always fill the full width, even when the polity has packed rows for its
+ * events and people (see `layoutStreams`).
+ */
+export function inPackedRow(band: Pick<StreamBand, 'kind' | 'rows'>, row: number): boolean {
+  return band.kind !== 'polity' && band.rows > 0 && row >= 0;
+}
+
+/**
  * Where each reign sits on the current axis: a polity's reigns fill the stream's full width; a
- * reign in a stream with packed rows fills its row. Reigns in hidden lanes are left out.
+ * reign in another stream with packed rows (a prophet ribbon) fills its row. Reigns in hidden
+ * lanes are left out.
  */
 export function reignBoxes(p: Pick<LayerProps, 'tile' | 'axis' | 'laneY'>): ReignBox[] {
   const geo = p.tile.axes[p.axis];
@@ -41,7 +51,7 @@ export function reignBoxes(p: Pick<LayerProps, 'tile' | 'axis' | 'laneY'>): Reig
     const band = bandOf.get(reign.stream_id);
     const laneTop = band ? p.laneY.get(band.lane_id) : undefined;
     if (!band || laneTop === undefined) continue;
-    if (band.rows > 0 && reign.row >= 0) {
+    if (inPackedRow(band, reign.row)) {
       const cy = laneTop + rowY(band, reign.row);
       out.push({ reign, band, laneTop, y0: cy - ROW_HEIGHT_PX / 2, y1: cy + ROW_HEIGHT_PX / 2 });
     } else {

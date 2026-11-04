@@ -3,7 +3,7 @@ import { act, createElement, Profiler } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { contrastRatio } from '../../../lib/core/contrast';
-import { ink, MIN_TEXT_CONTRAST, TEXT_ON_FILL } from '../../../lib/core/tokens';
+import { ink, MIN_TEXT_CONTRAST, TEXT_ON_FILL, touchTarget } from '../../../lib/core/tokens';
 import { FORK_YEARS } from '../../../lib/layout/streams';
 import { totalWidth, x as yearToX } from '../../../lib/layout/timescale';
 import Chart from '../Chart';
@@ -129,6 +129,23 @@ describe('LabelLayer', () => {
     const v = m.controller.getView();
     expect(x).toBeGreaterThan(v.k * seg('ahab').x0 + v.x);
     expect(x).toBeLessThan(v.k * seg('ahab').x1 + v.x);
+  });
+
+  it('centres a polity reign’s label on the stream, not on a packed row', async () => {
+    const m = await mount(360);
+    focus(m, 'solomon', 2.5, 360);
+    const united = data.tile.axes.scholarly.bands.find((b) => b.stream_id === 'united')!;
+    // The temple event gives the United Kingdom a packed row; Solomon still fills the stream.
+    expect(united.rows).toBeGreaterThan(0);
+    const solomon = shownLabel(m.svg, 'solomon')!;
+    expect(solomon.getAttribute('data-mode')).toBe('full');
+    const hit = m.svg.querySelector('rect.reign-hit[data-reign="solomon"]')!;
+    const hitCy = Number(hit.getAttribute('y')) + Number(hit.getAttribute('height')) / 2;
+    expect(Number(hit.getAttribute('height'))).toBeCloseTo(Math.max(united.height, touchTarget));
+    const name = Number(solomon.querySelector('.reign-name')!.getAttribute('y'));
+    const years = Number(solomon.querySelector('.reign-years')!.getAttribute('y'));
+    expect(name).toBeLessThan(hitCy);
+    expect(years).toBeGreaterThan(hitCy);
   });
 
   it('reveals more labels as the zoom grows, without overlap in a row', async () => {
