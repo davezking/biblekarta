@@ -122,6 +122,18 @@ describe('FigureLayer', () => {
     expect(visible(svg)).not.toContain('david');
   });
 
+  it('gives a polity reign the full stream’s figure, even when the polity has packed rows', async () => {
+    const { svg, controller } = await render(seed);
+    await act(async () => controller.setView({ x: 0, k: 1 }));
+    // The temple event gives the United Kingdom a packed row; Solomon's slot is still the stream.
+    const united = seed.tile.axes.scholarly.bands.find((b) => b.stream_id === 'united')!;
+    expect(united.rows).toBeGreaterThan(0);
+    const solomon = figures(svg).find((g) => g.dataset.person === 'solomon')!;
+    const fig = solomon.querySelector('svg.figure')!;
+    expect(Number(fig.getAttribute('width'))).toBe(figureSize(united.height));
+    expect(figureSize(united.height)).toBe(FIGURE_MAX_PX);
+  });
+
   it('is aria-hidden, untappable, and draws from the sprite with <use>', async () => {
     const { svg, controller } = await render(seed);
     await act(async () => controller.setView({ x: 0, k: 1 }));

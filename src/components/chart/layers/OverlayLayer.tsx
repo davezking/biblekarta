@@ -4,6 +4,7 @@
 import { ROW_HEIGHT_PX, rowY, type StreamBand } from '../../../lib/layout/streams';
 import { touchTarget } from '../../../lib/core/tokens';
 import { slotOf, topLaneSlot } from './EventLayer';
+import { inPackedRow } from './ReignLayer';
 import type { LayerProps } from './types';
 
 export interface Outline {
@@ -19,11 +20,12 @@ export function selectionOutlines(p: LayerProps): Outline[] {
   if (!sel) return [];
   const geo = p.tile.axes[p.axis];
   const bandOf = new Map(geo.bands.map((b) => [b.stream_id, b]));
-  const box = (streamId: string | null, x0: number, x1: number, row: number): Outline | null => {
-    const band: StreamBand | undefined = streamId ? bandOf.get(streamId) : undefined;
+  // A reign's slot, as ReignLayer draws it: a polity's reigns fill the stream's full width.
+  const reignBox = (streamId: string, x0: number, x1: number, row: number): Outline | null => {
+    const band: StreamBand | undefined = bandOf.get(streamId);
     const top = band ? p.laneY.get(band.lane_id) : undefined;
     if (!band || top === undefined) return null;
-    if (band.rows > 0 && row >= 0) {
+    if (inPackedRow(band, row)) {
       const cy = top + rowY(band, row);
       return { x0, x1, y0: cy - ROW_HEIGHT_PX / 2, y1: cy + ROW_HEIGHT_PX / 2 };
     }
@@ -41,13 +43,13 @@ export function selectionOutlines(p: LayerProps): Outline[] {
   const out: (Outline | null)[] = [];
   if (sel.kind === 'reign') {
     for (const r of geo.reigns)
-      if (r.reign_id === sel.id) out.push(box(r.stream_id, r.x0, r.x1, r.row));
+      if (r.reign_id === sel.id) out.push(reignBox(r.stream_id, r.x0, r.x1, r.row));
   } else if (sel.kind === 'event') {
     // Events and people sit in EventLayer's slots (a polity's rows stack from its lower edge).
     for (const e of geo.events) if (e.event_id === sel.id) out.push(itemBox(e));
   } else {
     for (const r of geo.reigns)
-      if (r.person_id === sel.id) out.push(box(r.stream_id, r.x0, r.x1, r.row));
+      if (r.person_id === sel.id) out.push(reignBox(r.stream_id, r.x0, r.x1, r.row));
     for (const s of geo.people) if (s.person_id === sel.id) out.push(itemBox(s));
   }
   return out.filter((o): o is Outline => o !== null);

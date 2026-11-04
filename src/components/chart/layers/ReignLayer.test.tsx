@@ -110,6 +110,38 @@ describe('ReignLayer', () => {
     expect(store.getSnapshot().selection).toEqual({ kind: 'reign', id: 'elisha' });
   });
 
+  it('fills a polity stream’s full width, even when the polity has packed rows', async () => {
+    const { svg } = await render();
+    const united = data.tile.axes.scholarly.bands.find((b) => b.stream_id === 'united')!;
+    // The temple event gives the United Kingdom a packed row; its reigns stay at full width.
+    expect(united.kind).toBe('polity');
+    expect(united.rows).toBeGreaterThan(0);
+    const { laneY } = placeLanes(data.index.layout!.scholarly.lanes, []);
+    const top = laneY.get(united.lane_id)! + united.cy - united.height / 2;
+    const bottom = top + united.height;
+    for (const id of ['david', 'solomon']) {
+      const lines = [...seg(svg, id).querySelectorAll('line.reign-divider')];
+      expect(lines.length).toBeGreaterThan(0);
+      for (const l of lines) {
+        expect(Number(l.getAttribute('y1'))).toBeCloseTo(top);
+        expect(Number(l.getAttribute('y2'))).toBeCloseTo(bottom);
+      }
+      const fill = seg(svg, id).querySelector('rect.reign-fill')!;
+      expect(Number(fill.getAttribute('height'))).toBeCloseTo(united.height);
+    }
+  });
+
+  it('outlines a selected polity reign over the stream’s full width', async () => {
+    const { svg, store } = await render();
+    const united = data.tile.axes.scholarly.bands.find((b) => b.stream_id === 'united')!;
+    const { laneY } = placeLanes(data.index.layout!.scholarly.lanes, []);
+    const top = laneY.get(united.lane_id)! + united.cy - united.height / 2;
+    await act(async () => store.select({ kind: 'reign', id: 'solomon' }));
+    const outline = svg.querySelector('rect.chart-selection')!;
+    expect(Number(outline.getAttribute('y'))).toBeCloseTo(top);
+    expect(Number(outline.getAttribute('height'))).toBeCloseTo(united.height);
+  });
+
   it('drops the reigns of a hidden lane', async () => {
     const { svg, store } = await render();
     await act(async () => store.setLaneHidden('united', true));
