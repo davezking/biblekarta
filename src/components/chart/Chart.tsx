@@ -48,8 +48,9 @@ export interface ChartProps {
 
 export default function Chart({ lang = 'am', dataBase, data, store, onController }: ChartProps) {
   const t = useMemo(() => createT(lang), [lang]);
-  const state = useChartData(dataBase, data);
   const ownStore = useMemo(() => store ?? createChartStore(), [store]);
+  // The store gives the loader the axis and the committed viewport (tile window, culling).
+  const state = useChartData(dataBase, data, ownStore);
   const channel = useMemo(() => createViewportChannel(), []);
   if (state.status === 'loading') return <p className="chart-status">{t('chart.loading')}</p>;
   if (state.status === 'error') return <p className="chart-status">{t('chart.error')}</p>;
