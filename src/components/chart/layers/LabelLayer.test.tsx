@@ -139,7 +139,14 @@ describe('LabelLayer', () => {
         m.controller.setView({ x: 0, k });
         vi.advanceTimersByTime(20);
       });
-      counts.push(m.svg.querySelectorAll('g.reign-label').length);
+      // Count the reigns on screen at the closest zoom (base x [0, 600]): the loader culls items
+      // far off screen, so labels further right drop out as k grows.
+      counts.push(
+        [...m.svg.querySelectorAll('g.reign-label')].filter((g) => {
+          const r = seg(g.getAttribute('data-label')!);
+          return r.x0 < 1200 / 2 && r.x1 > 0;
+        }).length,
+      );
       // Labels in the same stream row never overlap (centred, estimated widths in happy-dom).
       const byGroup = new Map<string, [number, number][]>();
       for (const g of m.svg.querySelectorAll('g.reign-label')) {
