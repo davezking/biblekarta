@@ -24,7 +24,7 @@ const live = index?.eras.some((e) => e.status === 'live') ?? false;
       <header class="cartouche">
         <h1 class="rubric">የመጽሐፍ ቅዱስ ካርታ</h1>
       </header>
-      <Chart client:load lang="am" />
+      <Chart client:load lang="am" syncUrl />
     </main>
   ) : (
     <main>

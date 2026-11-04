@@ -30,6 +30,7 @@ import ProphetLayer from './layers/ProphetLayer';
 import ReignLayer from './layers/ReignLayer';
 import type { LayerProps } from './layers/types';
 import { createChartStore, type ChartStore, type SelectionKind } from './state';
+import { startUrlSync } from './url-sync';
 import { createViewportChannel, type ViewportChannel } from './viewport';
 import { attachZoom, type ChartController, type ZoomHandle } from './zoom';
 import './chart.css';
@@ -44,9 +45,18 @@ export interface ChartProps {
   store?: ChartStore;
   /** Called once zoom is attached, with the only handle that moves the view. */
   onController?: (controller: ChartController) => void;
+  /** Keep the page URL in step with the view (url-sync.ts). Off in tests and embeds. */
+  syncUrl?: boolean;
 }
 
-export default function Chart({ lang = 'am', dataBase, data, store, onController }: ChartProps) {
+export default function Chart({
+  lang = 'am',
+  dataBase,
+  data,
+  store,
+  onController,
+  syncUrl = false,
+}: ChartProps) {
   const t = useMemo(() => createT(lang), [lang]);
   const ownStore = useMemo(() => store ?? createChartStore(), [store]);
   // The store gives the loader the axis and the committed viewport (tile window, culling).
@@ -62,6 +72,7 @@ export default function Chart({ lang = 'am', dataBase, data, store, onController
       channel={channel}
       t={t}
       onController={onController}
+      syncUrl={syncUrl}
     />
   );
 }
@@ -75,9 +86,10 @@ interface ChartViewProps {
   channel: ViewportChannel;
   t: ReturnType<typeof createT>;
   onController?: (controller: ChartController) => void;
+  syncUrl: boolean;
 }
 
-function ChartView({ index, tile, store, channel, t, onController }: ChartViewProps) {
+function ChartView({ index, tile, store, channel, t, onController, syncUrl }: ChartViewProps) {
   const s = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const cfg = index.timescale!;
   const lanes = index.layout![s.axis].lanes;
@@ -128,6 +140,16 @@ function ChartView({ index, tile, store, channel, t, onController }: ChartViewPr
     },
     [],
   );
+
+  // The URL follows the view once zoom is attached (it reads the latest tile for slugs).
+  const tileRef = useRef(tile);
+  useEffect(() => {
+    tileRef.current = tile;
+  }, [tile]);
+  useEffect(() => {
+    if (!syncUrl || !controller) return;
+    return startUrlSync({ store, controller, index, getTile: () => tileRef.current });
+  }, [syncUrl, controller, store, index]);
 
   // Taps select a reign, person or event (any element with data-select="kind:id").
   const onClick = (e: MouseEvent<SVGSVGElement>) => {

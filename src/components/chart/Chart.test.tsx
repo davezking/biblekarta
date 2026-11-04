@@ -142,4 +142,40 @@ describe('Chart', () => {
     expect(container.querySelectorAll('path.chart-band').length).toBeGreaterThan(0);
     vi.unstubAllGlobals();
   });
+
+  it('with syncUrl, restores the URL state, writes changes, and stops on unmount', async () => {
+    history.replaceState(null, '', '/?sel=p:ahab&hide=assyria');
+    const push = vi.spyOn(history, 'pushState');
+    const replace = vi.spyOn(history, 'replaceState');
+    const store = createChartStore();
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () => root.render(<Chart data={data} store={store} syncUrl />));
+    expect(store.getSnapshot().selection).toEqual({ kind: 'person', id: 'ahab' });
+    expect(store.getSnapshot().hiddenLanes).toEqual(['assyria']);
+
+    await act(async () => store.select({ kind: 'reign', id: 'ahab' }));
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(location.search).toBe('?sel=r:ahab&hide=assyria');
+
+    act(() => root.unmount());
+    const writes = push.mock.calls.length + replace.mock.calls.length;
+    store.select(null);
+    store.setHiddenLanes([]);
+    expect(push.mock.calls.length + replace.mock.calls.length).toBe(writes);
+    history.replaceState(null, '', '/');
+  });
+
+  it('leaves the URL alone without syncUrl', async () => {
+    history.replaceState(null, '', '/?sel=p:ahab');
+    const push = vi.spyOn(history, 'pushState');
+    const replace = vi.spyOn(history, 'replaceState');
+    const { store } = await render();
+    expect(store.getSnapshot().selection).toBeNull();
+    await act(async () => store.select({ kind: 'reign', id: 'ahab' }));
+    expect(push).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+    history.replaceState(null, '', '/');
+  });
 });
