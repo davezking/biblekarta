@@ -29,9 +29,16 @@ import OverlayLayer from './layers/OverlayLayer';
 import ProphetLayer from './layers/ProphetLayer';
 import ReignLayer from './layers/ReignLayer';
 import type { LayerProps } from './layers/types';
+import { useBandCull, yExtent } from './cull';
 import { createChartStore, type ChartStore, type SelectionKind } from './state';
 import { startUrlSync } from './url-sync';
-import { createViewportChannel, type ViewportChannel } from './viewport';
+import {
+  ALL_Y,
+  bandFor,
+  createViewportChannel,
+  type ViewportChannel,
+  type YBand,
+} from './viewport';
 import { attachZoom, type ChartController, type ZoomHandle } from './zoom';
 import './chart.css';
 
@@ -103,6 +110,7 @@ function ChartView({ index, tile, store, channel, t, onController, syncUrl }: Ch
   const zoomRef = useRef<ZoomHandle | null>(null);
   const [width, setWidth] = useState(0);
   const [controller, setController] = useState<ChartController | null>(null);
+  const [yBand, setYBand] = useState<YBand>(ALL_Y);
 
   // Measure the width (and follow resizes).
   useLayoutEffect(() => {
@@ -141,6 +149,37 @@ function ChartView({ index, tile, store, channel, t, onController, syncUrl }: Ch
     [],
   );
 
+  // The chart y range the window shows (the chart is taller than the screen with many lanes):
+  // screen-space layers leave the rest out of layout. Kept current as the page scrolls or resizes.
+  useEffect(() => {
+    const svg = svgRef.current!;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const r = svg.getBoundingClientRect();
+      if (!r.height) return; // no layout (tests): keep every lane
+      const next = bandFor(channel.band(), -r.top, window.innerHeight);
+      if (next === channel.band()) return;
+      channel.setBand(next);
+      setYBand(next);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', schedule, { passive: true, capture: true });
+    window.addEventListener('resize', schedule, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule, { capture: true });
+      window.removeEventListener('resize', schedule);
+    };
+  }, [channel, height]);
+
+  // Geometry outside the window's band is out of layout and paint (cull.ts).
+  const culled = useMemo(() => [geometryRef, overlayRef], []);
+  useBandCull(culled, channel);
+
   // The URL follows the view once zoom is attached (it reads the latest tile for slugs).
   const tileRef = useRef(tile);
   useEffect(() => {
@@ -171,6 +210,7 @@ function ChartView({ index, tile, store, channel, t, onController, syncUrl }: Ch
     committed: s.committedViewport,
     laneY,
     height,
+    yBand,
     selection: s.selection,
     t,
   };
@@ -200,7 +240,12 @@ function ChartView({ index, tile, store, channel, t, onController, syncUrl }: Ch
               const y = laneY.get(lane.id);
               if (y === undefined) return null;
               return (
-                <g key={lane.id} data-lane={lane.id} transform={`translate(0,${y})`}>
+                <g
+                  key={lane.id}
+                  data-lane={lane.id}
+                  transform={`translate(0,${y})`}
+                  {...yExtent(y, y + lane.height)}
+                >
                   {bands
                     .filter((b) => b.lane_id === lane.id)
                     .map((b) => (

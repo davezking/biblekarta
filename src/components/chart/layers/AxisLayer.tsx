@@ -130,12 +130,42 @@ export function placeRow(
 
 const isGeezDigit = (c: string) => c >= '፩' && c <= '፼';
 
-/** The rendered width of a label; estimated where the DOM does no text layout (tests). */
+// Canvas measurement, cached per text: no forced layout (getComputedTextLength would lay out the
+// whole chart right after a commit). The cache is cleared when web fonts finish loading.
+const widthCache = new Map<string, number>();
+let canvas: CanvasRenderingContext2D | null = null;
+function canvasWidth(text: string): number {
+  if (!canvas) {
+    try {
+      canvas =
+        typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
+    } catch {
+      canvas = null;
+    }
+  }
+  if (!canvas) return 0;
+  let w = widthCache.get(text);
+  if (w === undefined) {
+    canvas.font = `${LABEL_FONT_PX}px "Abyssinica SIL", serif`;
+    w = canvas.measureText(text).width;
+    widthCache.set(text, w);
+  }
+  return w;
+}
+
+/** Drops the canvas and the cached widths (tests mock the canvas per test). */
+export function resetAxisMeasure(): void {
+  canvas = null;
+  widthCache.clear();
+}
+
+/** The rendered width of a label; estimated where there is no canvas (tests). */
 function measure(el: SVGTextElement): number {
-  const w = typeof el.getComputedTextLength === 'function' ? el.getComputedTextLength() : 0;
+  const text = el.textContent ?? '';
+  const w = canvasWidth(text);
   if (w > 0) return w;
   let em = 0;
-  for (const c of el.textContent ?? '') em += isGeezDigit(c) ? 0.85 : 0.6;
+  for (const c of text) em += isGeezDigit(c) ? 0.85 : 0.6;
   return em * LABEL_FONT_PX;
 }
 
@@ -190,6 +220,19 @@ function placeAll(
   }
 }
 
+/** Web fonts settling: `document.fonts.ready` (read once per page) and each `loadingdone`. */
+let fontsReady: Promise<unknown> | undefined;
+function onFontsLoaded(cb: () => void): () => void {
+  const fonts = typeof document === 'undefined' ? undefined : document.fonts;
+  if (!fonts) return () => {};
+  if (fonts.status !== 'loaded') {
+    fontsReady ??= fonts.ready ?? Promise.resolve();
+    void fontsReady.then(cb);
+  }
+  fonts.addEventListener?.('loadingdone', cb);
+  return () => fonts.removeEventListener?.('loadingdone', cb);
+}
+
 function usePlacement(
   refs: RefObject<SVGGElement | null>[],
   labels: readonly AxisLabel[],
@@ -209,22 +252,22 @@ function usePlacement(
     const unsubscribe = viewport.subscribe(place);
 
     // Abyssinica loads with font-display: swap, so the chart can hydrate while a fallback font
-    // is drawn. When web fonts finish loading, measure again and re-place.
-    const fonts = typeof document === 'undefined' ? undefined : document.fonts;
+    // is drawn. When web fonts finish loading, measure again and re-place. (document.fonts.ready
+    // is read once per page: reading it updates style and layout, too costly on every commit.)
     let live = true;
     const remeasure = () => {
       if (!live) return;
+      widthCache.clear();
       for (const row of rows) row.widths = row.texts.map(measure);
       captionWidths.clear();
       const now = viewport.get() ?? committed;
       if (now) place(now);
     };
-    void fonts?.ready?.then(remeasure);
-    fonts?.addEventListener?.('loadingdone', remeasure);
+    const unsubscribeFonts = onFontsLoaded(remeasure);
     return () => {
       live = false;
       unsubscribe();
-      fonts?.removeEventListener?.('loadingdone', remeasure);
+      unsubscribeFonts();
     };
   }, [refs, labels, viewport, committed, axis, t]);
 }

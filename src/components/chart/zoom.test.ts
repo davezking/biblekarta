@@ -7,7 +7,7 @@ import Chart from './Chart';
 import type { ChartData } from './data/useChartData';
 import { seedChartData } from './seed-data.testutil';
 import { createChartStore, type ChartStore } from './state';
-import { WHEEL_END_MS, type ChartController } from './zoom';
+import { movedFar, WHEEL_END_MS, type ChartController } from './zoom';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -336,5 +336,15 @@ describe('zoom', () => {
     expect(parse(m.geometry.getAttribute('transform')).x).toBeCloseTo(-1000);
     act(() => m.controller.setView({ x: -1100, k: 3 }));
     expect(m.store.getSnapshot().committedViewport).toMatchObject({ x: -1100, k: 3 });
+  });
+});
+
+describe('movedFar', () => {
+  it('needs half a screen of pan or a 1.25× zoom since the last commit', () => {
+    expect(movedFar({ x: 0, k: 1 }, { x: -100, k: 1 }, 400)).toBe(false);
+    expect(movedFar({ x: 0, k: 1 }, { x: -200, k: 1 }, 400)).toBe(true);
+    expect(movedFar({ x: 0, k: 1 }, { x: 0, k: 1.2 }, 400)).toBe(false);
+    expect(movedFar({ x: 0, k: 1 }, { x: 0, k: 1.25 }, 400)).toBe(true);
+    expect(movedFar({ x: 0, k: 1 }, { x: 0, k: 0.75 }, 400)).toBe(true);
   });
 });

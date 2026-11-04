@@ -2,7 +2,8 @@
 // Mounted in the x-scaled geometry group, so everything is in base (k = 1) coordinates with a
 // non-scaling stroke, and there is no text here (labels are LabelLayer's, in screen space).
 //
-// - The segments are clipped to their stream's path, so a divider never pokes out of a tapering
+// - The segments are clipped to their stream's path (one clip per stream, on its group), so a
+//   divider never pokes out of a tapering
 //   or forking stream.
 // - An approximate reign (`dashed`) gets a dashed outline.
 // - An open end (only one year known) gets no divider on its unknown side.
@@ -16,6 +17,8 @@ import {
   type ReignSegment,
   type StreamBand,
 } from '../../../lib/layout/streams';
+import { yExtent } from '../cull';
+import { memoIgnoringCommitted } from './memo';
 import type { LayerProps } from './types';
 import './labels.css';
 
@@ -59,7 +62,7 @@ export function hitRange(box: Pick<ReignBox, 'y0' | 'y1'>): [number, number] {
   return [cy - h / 2, cy + h / 2];
 }
 
-export default function ReignLayer(props: LayerProps) {
+function ReignLayer(props: LayerProps) {
   const uid = useId().replace(/:/g, '');
   const boxes = reignBoxes(props);
   const streams = [...new Map(boxes.map((b) => [b.band.stream_id, b])).values()];
@@ -74,58 +77,87 @@ export default function ReignLayer(props: LayerProps) {
           </clipPath>
         ))}
       </defs>
-      {boxes.map(({ reign, band, y0, y1 }) => (
-        <g
-          key={reign.reign_id}
-          className="reign-segment"
-          data-reign-segment={reign.reign_id}
-          clipPath={`url(#${clipId(band.stream_id)})`}
-        >
-          <rect
-            className={reign.dashed ? 'reign-fill reign-dashed' : 'reign-fill'}
-            x={reign.x0}
-            y={y0}
-            width={reign.x1 - reign.x0}
-            height={y1 - y0}
-            vectorEffect="non-scaling-stroke"
-          />
-          {reign.open !== 'start' && (
-            <line
-              className="reign-divider"
-              x1={reign.x0}
-              x2={reign.x0}
-              y1={y0}
-              y2={y1}
-              vectorEffect="non-scaling-stroke"
-            />
-          )}
-          {reign.open !== 'end' && (
-            <line
-              className="reign-divider"
-              x1={reign.x1}
-              x2={reign.x1}
-              y1={y0}
-              y2={y1}
-              vectorEffect="non-scaling-stroke"
-            />
-          )}
-        </g>
-      ))}
-      {boxes.map((box) => {
-        const [h0, h1] = hitRange(box);
+      {streams.map(({ band }) => {
+        const segments = boxes.filter((b) => b.band.stream_id === band.stream_id);
+        const y0 = Math.min(...segments.map((b) => b.y0));
+        const y1 = Math.max(...segments.map((b) => b.y1));
+        // One clip per stream, on the group of its segments: a clip per segment would make
+        // hundreds of clip nodes for the compositor to sort through on every frame.
         return (
-          <rect
-            key={box.reign.reign_id}
-            className="reign-hit"
-            data-select={`reign:${box.reign.reign_id}`}
-            data-reign={box.reign.reign_id}
-            x={box.reign.x0}
-            y={h0}
-            width={box.reign.x1 - box.reign.x0}
-            height={h1 - h0}
-          />
+          <g
+            key={band.stream_id}
+            className="reign-stream"
+            data-reign-stream={band.stream_id}
+            clipPath={`url(#${clipId(band.stream_id)})`}
+            {...yExtent(y0, y1)}
+          >
+            {segments.map(({ reign, y0, y1 }) => (
+              <g key={reign.reign_id} className="reign-segment" data-reign-segment={reign.reign_id}>
+                <rect
+                  className={reign.dashed ? 'reign-fill reign-dashed' : 'reign-fill'}
+                  x={reign.x0}
+                  y={y0}
+                  width={reign.x1 - reign.x0}
+                  height={y1 - y0}
+                  vectorEffect="non-scaling-stroke"
+                />
+                {reign.open !== 'start' && (
+                  <line
+                    className="reign-divider"
+                    x1={reign.x0}
+                    x2={reign.x0}
+                    y1={y0}
+                    y2={y1}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                )}
+                {reign.open !== 'end' && (
+                  <line
+                    className="reign-divider"
+                    x1={reign.x1}
+                    x2={reign.x1}
+                    y1={y0}
+                    y2={y1}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                )}
+              </g>
+            ))}
+          </g>
+        );
+      })}
+      {streams.map(({ band }) => {
+        const hits = boxes
+          .filter((b) => b.band.stream_id === band.stream_id)
+          .map((b) => ({ box: b, range: hitRange(b) }));
+        // Unclipped (a hit target can be taller than its slot), and culled with its stream.
+        return (
+          <g
+            key={band.stream_id}
+            className="reign-hits"
+            {...yExtent(
+              Math.min(...hits.map((h) => h.range[0])),
+              Math.max(...hits.map((h) => h.range[1])),
+            )}
+          >
+            {hits.map(({ box, range: [h0, h1] }) => (
+              <rect
+                key={box.reign.reign_id}
+                className="reign-hit"
+                data-select={`reign:${box.reign.reign_id}`}
+                data-reign={box.reign.reign_id}
+                x={box.reign.x0}
+                y={h0}
+                width={box.reign.x1 - box.reign.x0}
+                height={h1 - h0}
+              />
+            ))}
+          </g>
         );
       })}
     </g>
   );
 }
+
+/** Re-rendered by data, axis, lanes or selection changes, not by each committed viewport. */
+export default memoIgnoringCommitted(ReignLayer);

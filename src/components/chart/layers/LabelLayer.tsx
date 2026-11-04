@@ -32,7 +32,9 @@ import {
 } from '../../../lib/layout/lod';
 import { FORK_YEARS } from '../../../lib/layout/streams';
 import { invert, spanDates, x as yearToX, type Axis } from '../../../lib/layout/timescale';
+import { createWriter, type Write } from '../dom-writer';
 import type { Viewport } from '../state';
+import { ALL_Y, atEdge, nearCommitted, nearView, panShifting, type YBand } from '../viewport';
 import { reignBoxes, type ReignBox } from './ReignLayer';
 import type { LayerProps } from './types';
 import './labels.css';
@@ -214,7 +216,7 @@ const overlaps = (a: Box, b: Box) => a[0] < b[1] && a[1] > b[0] && a[2] < b[3] &
 /** The label nodes, looked up once per render rather than on every viewport frame. */
 interface Nodes {
   names: Map<string, SVGTextElement>;
-  labels: { g: SVGGElement; texts: SVGTextElement[] }[];
+  labels: { g: SVGGElement }[];
 }
 
 function nodesOf(root: SVGGElement): Nodes {
@@ -222,23 +224,19 @@ function nodesOf(root: SVGGElement): Nodes {
   for (const el of root.querySelectorAll<SVGTextElement>('text[data-stream-name]')) {
     names.set(el.dataset.streamName!, el);
   }
-  const labels = [...root.querySelectorAll<SVGGElement>('g.reign-label')].map((g) => ({
-    g,
-    texts: [...g.querySelectorAll('text')],
-  }));
+  const labels = [...root.querySelectorAll<SVGGElement>('g.reign-label')].map((g) => ({ g }));
   return { names, labels };
 }
 
-function place(
+/** Stream names sit in the visible part of their stream, at its left. Returns their boxes. */
+function placeNames(
   nodes: Nodes,
   v: Viewport,
-  reigns: Map<string, ReignLabelData>,
-  lod: Map<string, { mode: LabelMode; width: number }>,
   names: StreamName[],
   measure: Measure,
-): Placed {
+  write: Write,
+): Map<string, Box> {
   const sx = (x: number) => v.k * x + v.x;
-  // Stream names sit in the visible part of their stream, at its left.
   const nameBoxes = new Map<string, Box>();
   for (const n of names) {
     const el = nodes.names.get(n.id);
@@ -247,22 +245,53 @@ function place(
     const x = Math.max(sx(n.x0), 0) + STREAM_NAME_INSET_PX;
     const fits = x + w <= Math.min(sx(n.x1), v.width) - STREAM_NAME_INSET_PX;
     if (fits) {
-      el.setAttribute('x', String(Math.round(x * 10) / 10));
-      el.removeAttribute('visibility');
+      write(el, 'x', String(Math.round(x * 10) / 10));
+      write(el, 'visibility', null);
       nameBoxes.set(n.id, [x, x + w, n.y - STREAM_NAME_PX, n.y + 4]);
     } else {
-      el.setAttribute('visibility', 'hidden');
+      write(el, 'visibility', 'hidden');
     }
   }
-  const placed: Placed = { full: new Set(), named: new Set() };
-  for (const { g, texts } of nodes.labels) {
+  return nameBoxes;
+}
+
+interface LabelPlacement extends Placed {
+  /** Labels whose span is not wholly on screen: clamped to its visible part, or hidden by it. */
+  edge: Set<string>;
+}
+
+/**
+ * Places the reign labels for the viewport. With `only`, just those labels are placed, inside a
+ * group shifted by `dx` (a pan frame: the rest moved with the group).
+ */
+function placeLabels(
+  nodes: Nodes,
+  v: Viewport,
+  reigns: Map<string, ReignLabelData>,
+  lod: Map<string, { mode: LabelMode; width: number }>,
+  nameBoxes: Map<string, Box>,
+  band: YBand,
+  write: Write,
+  only?: { ids: Set<string>; dx: number },
+): LabelPlacement {
+  const sx = (x: number) => v.k * x + v.x;
+  const placed: LabelPlacement = { full: new Set(), named: new Set(), edge: new Set() };
+  for (const { g } of nodes.labels) {
     const id = g.dataset.label!;
+    if (only && !only.ids.has(id)) continue;
     const r = reigns.get(id);
     const label = lod.get(id);
     if (!r || !label) continue;
+    const sx0 = sx(r.x0);
+    const sx1 = sx(r.x1);
+    if (atEdge(v, sx0, sx1)) placed.edge.add(id);
+    // Far off screen, or outside the window's y band: out of layout until it comes near.
+    const near = nearView(v, band, sx0, sx1, r.box.y0, r.box.y1);
+    write(g, 'display', near ? null : 'none');
+    if (!near) continue;
     // Centred in the visible part of the span, so a span running off screen keeps its label.
-    const left = Math.max(sx(r.x0), 0) + LOD_PAD_PX;
-    const right = Math.min(sx(r.x1), v.width) - LOD_PAD_PX;
+    const left = Math.max(sx0, 0) + LOD_PAD_PX;
+    const right = Math.min(sx1, v.width) - LOD_PAD_PX;
     const half = label.width / 2;
     const mid = Math.min(Math.max(sx((r.x0 + r.x1) / 2), left + half), right - half);
     const y = (r.box.y0 + r.box.y1) / 2;
@@ -272,16 +301,31 @@ function place(
     // or under the stream name.
     const show = right - left >= label.width && !(streamName && overlaps(box, streamName));
     if (!show) {
-      g.setAttribute('visibility', 'hidden');
+      write(g, 'visibility', 'hidden');
       continue;
     }
-    g.removeAttribute('visibility');
-    const x = String(Math.round(mid * 10) / 10);
-    for (const text of texts) text.setAttribute('x', x);
+    write(g, 'visibility', null);
+    // Moved as a group: a transform does not re-lay out the text, as a new x would.
+    write(g, 'transform', `translate(${Math.round((mid - (only?.dx ?? 0)) * 10) / 10},0)`);
     placed.named.add(id);
     if (label.mode === 'full') placed.full.add(id);
   }
   return placed;
+}
+
+/** Places the stream names and every reign label. */
+function place(
+  nodes: Nodes,
+  v: Viewport,
+  reigns: Map<string, ReignLabelData>,
+  lod: Map<string, { mode: LabelMode; width: number }>,
+  names: StreamName[],
+  measure: Measure,
+  band: YBand = ALL_Y,
+  write: Write = createWriter(),
+): LabelPlacement {
+  const nameBoxes = placeNames(nodes, v, names, measure, write);
+  return placeLabels(nodes, v, reigns, lod, nameBoxes, band, write);
 }
 
 // --- Tooltip -------------------------------------------------------------------------------
@@ -352,9 +396,10 @@ function useMeasure(): Measure {
 }
 
 export default function LabelLayer(props: LayerProps) {
-  const { tile, index, axis, cfg, laneY, t, viewport, committed } = props;
+  const { tile, index, axis, cfg, laneY, t, viewport, committed, yBand } = props;
   const rootRef = useRef<SVGGElement>(null);
   const tipRef = useRef<SVGGElement>(null);
+  const labelsRef = useRef<SVGGElement>(null);
   const measure = useMeasure();
 
   const reigns = useMemo(
@@ -373,7 +418,19 @@ export default function LabelLayer(props: LayerProps) {
         : new Map<string, { mode: LabelMode; width: number }>(),
     [reigns, committed, measure],
   );
+  // Only the labels near the committed view are rendered: the rest would cost every commit and
+  // every gesture frame for nothing (a pan reveals them by the next commit).
+  const rendered = useMemo(
+    () =>
+      [...lod].filter(([id]) => {
+        const r = byId.get(id)!;
+        return nearCommitted(committed, yBand, r.x0, r.x1, r.box.y0, r.box.y1);
+      }),
+    [lod, byId, committed, yBand],
+  );
   const placedRef = useRef<Placed>({ full: new Set(), named: new Set() });
+  // One writer for the layer's life: nodes React keeps across renders keep their written values.
+  const [write] = useState(createWriter);
 
   // Place after every render, then follow the live viewport imperatively (and close the tooltip:
   // the item under it is moving).
@@ -381,8 +438,22 @@ export default function LabelLayer(props: LayerProps) {
     const root = rootRef.current!;
     const tip = tipRef.current!;
     const nodes = nodesOf(root);
+    let edge = new Set<string>();
+    // Pan frames shift the labels' group (viewport.ts, panShifting) and re-place only the edge
+    // labels (clamped into the visible part of their span) and the stream names.
+    const shift = panShifting(labelsRef.current!, (v) => {
+      const p = place(nodes, v, byId, lod, names, measure, viewport.band(), write);
+      placedRef.current = p;
+      edge = p.edge;
+    });
+    let band = viewport.band();
     const run = (v: Viewport) => {
-      placedRef.current = place(nodes, v, byId, lod, names, measure);
+      const changed = viewport.band() !== band;
+      band = viewport.band();
+      const dx = shift(v, changed);
+      if (dx === null) return;
+      const nameBoxes = placeNames(nodes, v, names, measure, write);
+      placeLabels(nodes, v, byId, lod, nameBoxes, band, write, { ids: edge, dx });
     };
     const v = viewport.get() ?? committed;
     if (v) run(v);
@@ -391,7 +462,7 @@ export default function LabelLayer(props: LayerProps) {
       const opened = tipViews.get(tip);
       if (opened && movedPast(opened, next)) hideTooltip(tip);
     });
-  }, [viewport, committed, byId, lod, names, measure]);
+  }, [viewport, committed, byId, lod, names, measure, write]);
 
   // Tooltips: hover (mouse, pen) and long-press (touch) on a reign whose label is not fully shown.
   useEffect(() => {
@@ -492,22 +563,24 @@ export default function LabelLayer(props: LayerProps) {
           {n.name}
         </text>
       ))}
-      {[...lod].map(([id, label]) => {
-        const r = byId.get(id)!;
-        const y = baselines(r.box, label.mode);
-        return (
-          <g key={id} className="reign-label" data-label={id} data-mode={label.mode}>
-            <text className="reign-name" y={y.name} fill={r.nameInk}>
-              {r.name}
-            </text>
-            {label.mode === 'full' && (
-              <text className="reign-years" y={y.years} fill={r.yearsInk}>
-                {r.years}
+      <g ref={labelsRef} className="reign-labels">
+        {rendered.map(([id, label]) => {
+          const r = byId.get(id)!;
+          const y = baselines(r.box, label.mode);
+          return (
+            <g key={id} className="reign-label" data-label={id} data-mode={label.mode}>
+              <text className="reign-name" x={0} y={y.name} fill={r.nameInk}>
+                {r.name}
               </text>
-            )}
-          </g>
-        );
-      })}
+              {label.mode === 'full' && (
+                <text className="reign-years" x={0} y={y.years} fill={r.yearsInk}>
+                  {r.years}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </g>
       <g ref={tipRef} className="chart-tooltip" role="tooltip" visibility="hidden">
         <rect rx={6} />
         <text className="tooltip-name" />
