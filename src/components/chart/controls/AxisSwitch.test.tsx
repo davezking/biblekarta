@@ -71,13 +71,16 @@ describe('AxisSwitch', () => {
   it('switches to traditional, counts the undated items, keeps the selection, invents nothing', async () => {
     const m = await mount();
     await act(async () => m.store.select({ kind: 'reign', id: 'ahab' }));
-    expect(container.querySelector('.axis-unplaced')).toBeNull();
+    // The live region exists before the switch, empty, so the count is announced when it fills.
+    const status = container.querySelector('[role="status"].axis-unplaced')!;
+    expect(status.textContent).toBe('');
     await click(m.radio('traditional'));
+    expect(container.querySelector('[role="status"].axis-unplaced')).toBe(status);
     expect(m.store.getSnapshot().axis).toBe('traditional');
     expect(m.radio('traditional').getAttribute('aria-checked')).toBe('true');
     const n = unplacedCount(data.index, 'traditional');
     expect(n).toBeGreaterThan(0);
-    expect(container.querySelector('.axis-unplaced')!.textContent).toBe(t('axis.unplaced', { n }));
+    expect(status.textContent).toBe(t('axis.unplaced', { n }));
     expect(m.store.getSnapshot().selection).toEqual({ kind: 'reign', id: 'ahab' });
     // Every traditional date in the seed is TBD: no reign is drawn on this axis.
     expect(m.svg.querySelectorAll('[data-reign-segment]')).toHaveLength(0);
@@ -103,6 +106,35 @@ describe('AxisSwitch', () => {
     act(() => m.controller.setView({ x: there.x - 300, k: there.k }));
     await click(m.radio('scholarly'));
     expect(m.controller.getView()).not.toEqual(start);
+  });
+
+  it('returns exactly to the starting view with the animation played to its end', async () => {
+    reduced(false);
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'requestAnimationFrame', 'performance', 'Date'],
+    });
+    try {
+      const m = await mount();
+      act(() => m.controller.setView({ x: -1200, k: 2.5 }));
+      const start = m.controller.getView();
+      const spy = vi.spyOn(m.controller, 'setView');
+      await click(m.radio('traditional'));
+      const target = spy.mock.calls.at(-1)![0];
+      expect(spy.mock.calls.at(-1)![1]).toEqual({ animate: true });
+      // Mid-flight the view is still on its way…
+      act(() => void vi.advanceTimersByTime(60));
+      expect(m.controller.getView()).not.toEqual(target);
+      // …and at the end it is exactly the target.
+      act(() => void vi.advanceTimersByTime(2000));
+      const landed = m.controller.getView();
+      expect(Math.abs(landed.x - target.x)).toBeLessThan(1e-9);
+      expect(landed.k).toBeCloseTo(target.k, 12);
+      await click(m.radio('scholarly'));
+      act(() => void vi.advanceTimersByTime(2000));
+      expect(m.controller.getView()).toEqual(start);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('moves and selects with the arrow keys, keeping focus on the checked option', async () => {

@@ -129,11 +129,11 @@ export default function AxisSwitch({ store, controller, index, tile, t }: Contro
           </button>
         ))}
       </div>
-      {axis === 'traditional' && count > 0 && (
-        <span className="axis-unplaced" role="status" style={countStyle}>
-          {t('axis.unplaced', { n: count })}
-        </span>
-      )}
+      {/* Always rendered: screen readers announce changes to a live region that already
+          exists, not one inserted with its text. Empty on scholarly or with nothing undated. */}
+      <span className="axis-unplaced" role="status" style={countStyle}>
+        {axis === 'traditional' && count > 0 ? t('axis.unplaced', { n: count }) : ''}
+      </span>
     </div>
   );
 }
