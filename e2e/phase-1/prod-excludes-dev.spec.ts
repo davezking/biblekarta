@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -18,8 +18,16 @@ const FIXTURES = {
   SCRIPTURE_VERSION: 'fixtures',
 };
 
+/**
+ * Build output goes on the checkout's own file system, not in os.tmpdir(): `astro build` moves
+ * server-built assets (CSS) into the output folder with fs.rename, which fails with EXDEV where
+ * /tmp is a different mount (as on some CI runners).
+ */
+const BUILD_TMP = join(process.cwd(), 'node_modules', '.cache', 'bk-e2e');
+
 async function build(env: Record<string, string>) {
-  const outDir = await mkdtemp(join(tmpdir(), 'bk-prod-'));
+  await mkdir(BUILD_TMP, { recursive: true });
+  const outDir = await mkdtemp(join(BUILD_TMP, 'bk-prod-'));
   const base = { ...process.env };
   delete base.BK_SEED;
   delete base.BK_ALLOW_FIXTURE_SCRIPTURE;
