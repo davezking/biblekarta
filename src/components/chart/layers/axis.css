@@ -1,0 +1,58 @@
+/* Decade grid and year axis (DR-7). Colours, lines and fonts come from tokens.css. */
+
+.chart-grid-lines {
+  pointer-events: none;
+}
+
+.grid-line {
+  stroke: var(--ink);
+  vector-effect: non-scaling-stroke;
+}
+
+/* Decades: thin, low-contrast ink; hidden when they would crowd together (zoomed out). */
+.grid-decade {
+  stroke-width: var(--line-hairline);
+  stroke-opacity: 0.14;
+}
+.chart-grid-lines[data-decades-hidden] .grid-decade {
+  display: none;
+}
+
+/* Centuries: slightly stronger. */
+.grid-century {
+  stroke-width: var(--line-hairline);
+  stroke-opacity: 0.32;
+}
+
+/* Half-centuries: red ink. */
+.grid-half {
+  stroke: var(--ink-red);
+  stroke-width: var(--line-hairline);
+  stroke-opacity: 0.45;
+}
+
+.chart-axis {
+  pointer-events: none;
+}
+
+.chart-axis text {
+  font-family: var(--font-manuscript);
+  font-size: var(--font-size-xs);
+  fill: var(--ink-axis);
+}
+
+.axis-label {
+  text-anchor: middle;
+}
+
+.chart-axis .axis-red {
+  fill: var(--ink-red);
+}
+
+/* The bottom row sits over the last lane: a vellum halo keeps it legible over the streams. */
+.axis-bottom text {
+  paint-order: stroke;
+  stroke: var(--vellum);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
