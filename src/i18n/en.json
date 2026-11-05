@@ -64,5 +64,21 @@
   "verse.loading": "Loading the verses…",
   "verse.error": "The verses could not be loaded",
   "verse.retry": "Try again",
-  "verse.missing": "Not in this edition: {verses}"
+  "verse.missing": "Not in this edition: {verses}",
+  "page.site": "Bible Karta",
+  "page.title": "{name} — {site}",
+  "page.description": "{name} ({name_en}); {dates}.",
+  "page.description.era": "{name} ({name_en}); {dates}. {people} people and {events} events.",
+  "page.date": "{axis}: {date}",
+  "page.date.separator": "; ",
+  "page.kind.person": "Person",
+  "page.kind.event": "Event",
+  "page.kind.era": "Era",
+  "page.people": "People",
+  "page.events": "Events",
+  "page.home": "To the whole chart",
+  "page.era.certainty.anchored": "Anchored",
+  "page.era.certainty.approximate": "Approximate",
+  "page.era.certainty.disputed": "Disputed",
+  "page.era.certainty.tradition_only": "Tradition only"
 }

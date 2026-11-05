@@ -1,5 +1,5 @@
 {
-  "_comment": "axis.traditional.prefix (ከፍጥረት) is pending reviewer approval: ዓ.ዓ. already means BC in everyday Amharic (PRD risk #3). Templates: {year} is a number or range, {date} a formatted date. The detail panel's how.* and certainty.* wording is pending the reviewer's approval (R13). verse.credit is a placeholder: the Bible Society of Ethiopia approves the exact credit wording (FR-19).",
+  "_comment": "axis.traditional.prefix (ከፍጥረት) is pending reviewer approval: ዓ.ዓ. already means BC in everyday Amharic (PRD risk #3). Templates: {year} is a number or range, {date} a formatted date. The detail panel's how.* and certainty.* wording is pending the reviewer's approval (R13). verse.credit is a placeholder: the Bible Society of Ethiopia approves the exact credit wording (FR-19). The item pages' page.* wording is pending the reviewer's approval too.",
   "date.bc": "{year} ዓ.ዓ.",
   "date.ad": "{year} ዓ.ም.",
   "date.approx": "በግምት {date}",
@@ -64,5 +64,21 @@
   "verse.loading": "ጥቅሱ በመጫን ላይ ነው…",
   "verse.error": "ጥቅሱን መጫን አልተቻለም",
   "verse.retry": "እንደገና ሞክር",
-  "verse.missing": "በዚህ እትም ውስጥ የሌለ ቁጥር፦ {verses}"
+  "verse.missing": "በዚህ እትም ውስጥ የሌለ ቁጥር፦ {verses}",
+  "page.site": "የመጽሐፍ ቅዱስ ካርታ",
+  "page.title": "{name} — {site}",
+  "page.description": "{name} ({name_en})፤ {dates}።",
+  "page.description.era": "{name} ({name_en})፤ {dates}። {people} ሰዎችና {events} ክስተቶች።",
+  "page.date": "{axis}፦ {date}",
+  "page.date.separator": "፤ ",
+  "page.kind.person": "ሰው",
+  "page.kind.event": "ክስተት",
+  "page.kind.era": "ዘመን",
+  "page.people": "ሰዎች",
+  "page.events": "ክስተቶች",
+  "page.home": "ወደ ሙሉው ካርታ",
+  "page.era.certainty.anchored": "በታሪካዊ መነሻ የተረጋገጠ",
+  "page.era.certainty.approximate": "ግምታዊ",
+  "page.era.certainty.disputed": "አከራካሪ",
+  "page.era.certainty.tradition_only": "ትውፊት ብቻ"
 }
