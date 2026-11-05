@@ -30,5 +30,8 @@
   "anchor.confidence": "ተዓማኒነት፦ {level}",
   "anchor.confidence.high": "ከፍተኛ",
   "anchor.confidence.medium": "መካከለኛ",
-  "anchor.confidence.low": "ዝቅተኛ"
+  "anchor.confidence.low": "ዝቅተኛ",
+  "ui.close": "ዝጋ",
+  "ui.open_menu": "ምናሌውን ክፈት",
+  "panel.handle": "የፓነሉን መጠን ቀይር"
 }
