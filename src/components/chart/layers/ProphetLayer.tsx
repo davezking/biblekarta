@@ -23,7 +23,7 @@ import {
   type ScreenItem,
 } from './EventLayer';
 import { yExtent } from '../cull';
-import { inkOn } from './LabelLayer';
+import { inkOn, streamNames } from './LabelLayer';
 import type { LayerProps } from './types';
 import './items.css';
 
@@ -64,7 +64,11 @@ export function personItems(p: Input): ScreenItem[] {
 }
 
 export default function ProphetLayer(props: LayerProps) {
-  const { tile, index, axis, laneY, t, viewport, committed } = props;
+  const { tile, index, axis, cfg, laneY, t, viewport, committed } = props;
+  const names = useMemo(
+    () => streamNames({ tile, index, axis, cfg, laneY }),
+    [tile, index, axis, cfg, laneY],
+  );
   const { ref, labelsGroup } = useLabelsGroup();
   const items = useMemo(
     () => personItems({ tile, index, axis, laneY, t }),
@@ -92,6 +96,7 @@ export default function ProphetLayer(props: LayerProps) {
         items={items}
         className="chart-person-items"
         mark="dot"
+        names={names}
         viewport={viewport}
         committed={committed}
         yBand={props.yBand}

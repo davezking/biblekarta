@@ -9,7 +9,7 @@ import type { ChartData } from '../data/useChartData';
 import { seedChartData } from '../seed-data.testutil';
 import { createChartStore, type ChartStore } from '../state';
 import type { ChartController } from '../zoom';
-import { EVENT_MARK, eventItems, itemLabels, type ScreenItem } from './EventLayer';
+import { EVENT_MARK, eventItems, itemLabels, titleBox, type ScreenItem } from './EventLayer';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -199,6 +199,39 @@ describe('EventLayer', () => {
       hit.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     expect(store.getSnapshot().selection).toEqual({ kind: 'event', id: 'jehu-tribute' });
+  });
+
+  it('keeps a title off its stream name, with a tooltip instead, until it moves clear', async () => {
+    const { svg, controller, store } = await render(seed);
+    const shishak = seed.tile.axes.scholarly.events.find((e) => e.event_id === 'shishak-invasion')!;
+    const mid = (shishak.x0 + shishak.x1) / 2;
+    // The mark near the left edge, where Egypt's name is lettered.
+    await act(async () => controller.setView({ x: 24 - 3 * mid, k: 3 }));
+    const v = store.getSnapshot().committedViewport!;
+    const g = item(svg, 'shishak-invasion');
+    const title = () => g.querySelector('text.item-title')!;
+    const name = svg.querySelector('text[data-stream-name="egypt"]')!;
+    expect(name.getAttribute('visibility')).toBeNull();
+    expect(v.k * mid + v.x).toBeLessThan(60);
+    expect(title().getAttribute('visibility')).toBe('hidden');
+
+    await act(async () => {
+      g.querySelector('rect.item-hit')!.dispatchEvent(
+        new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse' }),
+      );
+    });
+    const tip = svg.querySelector('g.chart-event-items .item-tooltip')!;
+    expect(tip.getAttribute('data-tip-for')).toBe('event:shishak-invasion');
+
+    // Moved well clear of the name: lettered again.
+    await act(async () => controller.setView({ x: 700 - 3 * mid, k: 3 }));
+    expect(title().getAttribute('visibility')).toBeNull();
+  });
+
+  it('measures a title box from its baseline and font size', () => {
+    const it0 = { cy: 100, size: 'years' as const };
+    expect(titleBox(it0, 10, 50)).toEqual([10, 60, 104.5 - 13, 107.5]);
+    expect(titleBox({ cy: 100, size: 'name' }, 0, 20)[2]).toBe(105.5 - 16);
   });
 
   it('re-places its items during a gesture with no React render', async () => {
