@@ -1,0 +1,120 @@
+/* Detail panel content (P2-S4-T1). Manuscript text is never bold; emphasis is red ink (DR-3).
+   Tokens only. */
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  font-family: var(--font-manuscript);
+  color: var(--ink);
+}
+
+.detail-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+.detail-figure {
+  flex: none;
+}
+
+.detail-name-en {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xs);
+  color: var(--ink-brown);
+}
+
+.detail-summary {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+.date-block-label,
+.detail-section-label {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--ink-red);
+}
+
+.date-block-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.date-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.date-row-axis {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xs);
+  color: var(--ink-brown);
+}
+
+.date-row-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.date-row-text {
+  font-size: var(--font-size-md);
+}
+
+.date-row-stale {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xs);
+  color: var(--ink-red);
+}
+
+.how-known-list {
+  margin: 0;
+  padding-inline-start: var(--space-lg);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.detail-refs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+}
+
+.detail-note p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.date-block[data-selected] {
+  padding-inline-start: var(--space-sm);
+  border-inline-start: var(--line-strong) solid var(--ink-red);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
