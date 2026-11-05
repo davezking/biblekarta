@@ -38,7 +38,7 @@
 
 ## Numbers
 
-All runs were in the Claude Code cloud container (headless Chromium, Playwright 1.64). Frame numbers vary by ±15–20 ms between runs at 4×. The Pixel 7 run records only about 80 frames, so its p95 is noisier.
+The table's runs were in the Claude Code cloud container (headless Chromium, Playwright 1.64). Frame numbers vary by ±15–20 ms between runs at 4×. The Pixel 7 run records only about 80 frames, so its p95 is noisier.
 
 | | Before | After |
 |---|---|---|
@@ -56,9 +56,22 @@ Desktop p95 by phase after the fixes, at 4×:
 - pan: 50 ms (it was 133 before the movement-based commits);
 - wheel zoom: 83–100 ms.
 
+### On GitHub's runner
+
+These are from the first CI run of `pnpm perf`, on the `phase-2` push that merged #34 (2026-11-05, [run 42007826983](https://github.com/davezking/biblekarta/actions/runs/42007826983)). The runner is `ubuntu-latest` with the same code and the same 4× throttle; its CPU is faster than the container's, so the same throttle leaves more headroom.
+
+| | Desktop | Pixel 7 | Budget |
+|---|---|---|---|
+| Frames recorded | 392 | 122 | |
+| p50 / p95 / p99 / max, 4× (ms) | 16.7 / 33.4 / 50 / 217 | 16.7 / 50 / 117 / 150 | p95 ≤ 20 |
+| LCP, Fast 3G (s) | 1.30 | 1.34 | ≤ 3 |
+| Initial JS / chart island (KB gz) | 113.1 / 111.1 | — | ≤ 250 / 180 |
+
+On the runner, the stress seed misses the frame budget by about 1.7× on desktop and 2.5× on Pixel 7, against 4–10× in the container. The median frame is on time in both projects. This is a single run; later CI runs on `phase-*` pushes upload theirs as `perf-report`.
+
 **Verdict for Phase 2:**
 - JS and LCP are well within budget.
-- Frames meet budget on the Board 5 seed at 4× (p95 17 ms), and on the stress seed at 1×. They miss on the stress seed at 4×.
+- Frames meet budget on the Board 5 seed at 4× (p95 17 ms), and on the stress seed at 1×. They miss on the stress seed at 4×: by 4–10× in the container, and by about 2× on GitHub's runner.
 - With the labels static, a geometry-only transform frame of the stress chart still costs about 36 ms of style, layout and paint at 4×. So SVG streams can't reach a 20 ms p95 at this density on this CPU, whatever the screen-space layers do.
 
 That is PRD risk #9. The decision (Canvas for the stream layer) belongs to P5-S2-T1, with dense real data. Until then the CI perf step reports but doesn't block.
