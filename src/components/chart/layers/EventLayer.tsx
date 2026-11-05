@@ -21,8 +21,29 @@ import type { T } from '../../../lib/i18n';
 import { LOD_GAP_PX, LOD_PAD_PX, type LabelKind, type Measure } from '../../../lib/layout/lod';
 import { ROW_HEIGHT_PX, rowY } from '../../../lib/layout/streams';
 import type { Axis } from '../../../lib/layout/timescale';
+import { yExtent } from '../cull';
+import { createWriter, type Write } from '../dom-writer';
 import type { Viewport } from '../state';
-import { createMeasure, inkOn, LONG_PRESS_MS, LONG_PRESS_SLOP_PX, movedPast } from './LabelLayer';
+import {
+  atEdge,
+  CULL_MARGIN_PX,
+  nearCommitted,
+  nearView,
+  panShifting,
+  type YBand,
+} from '../viewport';
+import {
+  createMeasure,
+  inkOn,
+  LONG_PRESS_MS,
+  LONG_PRESS_SLOP_PX,
+  movedPast,
+  overlaps,
+  streamNameBoxes,
+  streamNames,
+  type Box,
+  type StreamName,
+} from './LabelLayer';
 import type { LayerProps } from './types';
 import './items.css';
 
@@ -205,68 +226,120 @@ export function itemLabels(
 
 // --- Imperative placement --------------------------------------------------------------------
 
-/** The rectangle a hit target covers on screen: ≥ 44 px each way, centred on the item. */
-export function hitBox(
-  it: ScreenItem,
-  v: Viewport,
-): { x: number; y: number; w: number; h: number } {
-  const sx0 = v.k * it.x0 + v.x;
-  const sx1 = v.k * it.x1 + v.x;
-  const w = it.point ? touchTarget : Math.max(sx1 - sx0, touchTarget);
-  const h = Math.max(it.h, touchTarget);
-  return { x: (sx0 + sx1) / 2 - w / 2, y: it.cy - h / 2, w, h };
-}
-
 const r1 = (v: number) => String(Math.round(v * 10) / 10);
 
-function place(
-  root: SVGGElement,
-  items: Map<string, ScreenItem>,
-  labels: Map<string, ItemLabel>,
-  v: Viewport,
-): Set<string> {
-  const shown = new Set<string>();
+/** Title font sizes, px (items.css matches). */
+const TITLE_PX = { name: 16, years: 13 } as const;
+/** A title's baseline below its slot's centre, px. */
+const titleBaseline = (it: Pick<ScreenItem, 'cy' | 'size'>) =>
+  it.cy + (it.size === 'name' ? 5.5 : 4.5);
+
+/** The screen box of an item's title starting at screen x `x0`. */
+export function titleBox(it: Pick<ScreenItem, 'cy' | 'size'>, x0: number, width: number): Box {
+  const base = titleBaseline(it);
+  return [x0, x0 + width, base - TITLE_PX[it.size], base + 3];
+}
+
+/** An item's nodes, looked up once per render. */
+interface ItemNodes {
+  g: SVGGElement;
+  it: ScreenItem;
+  hit: SVGRectElement;
+  text: SVGTextElement | null;
+}
+
+function nodesOf(root: SVGGElement, items: Map<string, ScreenItem>): ItemNodes[] {
+  const out: ItemNodes[] = [];
   for (const g of root.querySelectorAll<SVGGElement>('g[data-item]')) {
     const it = items.get(g.dataset.item!);
     if (!it) continue;
+    out.push({
+      g,
+      it,
+      hit: g.querySelector<SVGRectElement>('rect.item-hit')!,
+      text: g.querySelector<SVGTextElement>('text.item-title'),
+    });
+  }
+  return out;
+}
+
+/**
+ * Places every item for the viewport: one transform per item (to the middle of its span), its
+ * hit target's width (spans), and its title. Items far off screen, or outside the window's y band,
+ * are set to display: none, out of layout and paint, until they come near. Returns the keys of
+ * the items whose title is on screen, and of those not wholly on screen (`edge`: clamped or
+ * flipped at an edge). With `only`, just those items are placed, inside a group shifted by `dx`
+ * (a pan frame: the rest moved with the group).
+ */
+function place(
+  nodes: ItemNodes[],
+  labels: Map<string, ItemLabel>,
+  v: Viewport,
+  band: YBand,
+  write: Write,
+  names: readonly Box[] = [],
+  only?: { keys: Set<string>; dx: number },
+): { shown: Set<string>; edge: Set<string> } {
+  const shown = new Set<string>();
+  const edge = new Set<string>();
+  const dx = only?.dx ?? 0;
+  // Stream names sit at the left of the screen: items near them are re-checked on pan frames.
+  const nameZone = Math.max(-Infinity, ...names.map((b) => b[1])) + CULL_MARGIN_PX;
+  for (const n of nodes) {
+    const { it } = n;
+    if (only && !only.keys.has(it.key)) continue;
     const sx0 = v.k * it.x0 + v.x;
     const sx1 = v.k * it.x1 + v.x;
-    const hit = hitBox(it, v);
-    const hitEl = g.querySelector<SVGRectElement>('rect.item-hit')!;
-    hitEl.setAttribute('x', r1(hit.x));
-    hitEl.setAttribute('width', r1(hit.w));
-    const ax = (sx0 + sx1) / 2;
-    const mark = g.querySelector<SVGElement>('.item-mark');
-    if (mark) mark.setAttribute(mark.tagName === 'circle' ? 'cx' : 'x', r1(ax));
-    const text = g.querySelector<SVGTextElement>('text.item-title');
+    const mid = (sx0 + sx1) / 2;
     const label = labels.get(it.key);
-    if (!text || !label) continue;
+    const reach = it.point ? MARK_HALF_PX + MARK_GAP_PX + (label?.width ?? 0) : 0;
+    const half = Math.max(it.h, touchTarget) / 2;
+    const l = Math.min(sx0, mid - reach);
+    const r = Math.max(sx1, mid + reach);
+    if (atEdge(v, l, r) || (l < nameZone && r > -CULL_MARGIN_PX)) edge.add(it.key);
+    const near = nearView(v, band, l, r, it.cy - half, it.cy + half);
+    write(n.g, 'display', near ? null : 'none');
+    if (!near) continue;
+    write(n.g, 'transform', `translate(${r1(mid - dx)},0)`);
+    if (!it.point) {
+      const w = Math.max(sx1 - sx0, touchTarget);
+      write(n.hit, 'x', r1(-w / 2));
+      write(n.hit, 'width', r1(w));
+    }
+    if (!n.text || !label) continue;
     let x: number;
     let show: boolean;
+    let anchor: string | null = null;
     if (it.point) {
       // Right of the mark; flipped to its left where it would run off the right edge.
-      const right = ax + MARK_HALF_PX + MARK_GAP_PX;
-      const flip = right + label.width > v.width && ax - MARK_HALF_PX - MARK_GAP_PX >= label.width;
-      x = flip ? ax - MARK_HALF_PX - MARK_GAP_PX : right;
-      text.setAttribute('text-anchor', flip ? 'end' : 'start');
-      show = ax + MARK_HALF_PX > 0 && ax - MARK_HALF_PX < v.width;
+      const right = mid + MARK_HALF_PX + MARK_GAP_PX;
+      const flip = right + label.width > v.width && mid - MARK_HALF_PX - MARK_GAP_PX >= label.width;
+      x = flip ? mid - MARK_HALF_PX - MARK_GAP_PX : right;
+      anchor = flip ? 'end' : 'start';
+      show = mid + MARK_HALF_PX > 0 && mid - MARK_HALF_PX < v.width;
     } else {
       // Centred in the visible part of the span; hidden where that no longer fits it.
       const left = Math.max(sx0, 0) + LOD_PAD_PX;
       const right = Math.min(sx1, v.width) - LOD_PAD_PX;
-      const half = label.width / 2;
-      x = Math.min(Math.max(ax, left + half), right - half);
+      const halfW = label.width / 2;
+      x = Math.min(Math.max(mid, left + halfW), right - halfW);
       show = right - left >= label.width;
     }
+    // Never over a stream name (as LabelLayer keeps reign labels off them).
+    if (show && names.length) {
+      const x0 = anchor === 'start' ? x : anchor === 'end' ? x - label.width : x - label.width / 2;
+      show = !names.some((b) => overlaps(titleBox(it, x0, label.width), b));
+    }
     if (show) {
-      text.setAttribute('x', r1(x));
-      text.removeAttribute('visibility');
+      write(n.text, 'x', r1(x - mid));
+      if (anchor) write(n.text, 'text-anchor', anchor);
+      write(n.text, 'visibility', null);
       shown.add(it.key);
     } else {
-      text.setAttribute('visibility', 'hidden');
+      write(n.text, 'visibility', 'hidden');
     }
   }
-  return shown;
+  return { shown, edge };
 }
 
 // --- Tooltip -------------------------------------------------------------------------------
@@ -316,25 +389,30 @@ export function useLabelsGroup() {
   return { ref, labelsGroup };
 }
 
-interface ItemsOverlayProps extends Pick<LayerProps, 'viewport' | 'committed'> {
+interface ItemsOverlayProps extends Pick<LayerProps, 'viewport' | 'committed' | 'yBand'> {
   /** The chart's screen-space labels group (from `useLabelsGroup`). */
   labelsGroup: SVGGElement | null;
   items: ScreenItem[];
   className: string;
   /** The mark a point item gets: the ፨ glyph (events) or a dot (people). */
   mark: 'glyph' | 'dot';
+  /** The stream names (LabelLayer letters them): titles keep off them. */
+  names: readonly StreamName[];
 }
 
 /** Marks, titles, hit targets and the tooltip of screen-space items, portaled into the labels group. */
 export function ItemsOverlay({
   labelsGroup,
   items,
+  names,
   className,
   mark,
   viewport,
   committed,
+  yBand,
 }: ItemsOverlayProps) {
   const rootRef = useRef<SVGGElement>(null);
+  const itemsRef = useRef<SVGGElement>(null);
   const tipRef = useRef<SVGGElement>(null);
   const [measure] = useState(createMeasure);
 
@@ -343,15 +421,49 @@ export function ItemsOverlay({
     () => (committed ? itemLabels(items, committed.k, measure) : new Map<string, ItemLabel>()),
     [items, committed, measure],
   );
+  // Only the items near the committed view are rendered (a pan reveals them by the next commit).
+  const rendered = useMemo(
+    () =>
+      items.filter((it) => {
+        const half = Math.max(it.h, touchTarget) / 2;
+        const reach = labels.get(it.key)?.width ?? 0;
+        return nearCommitted(
+          committed,
+          yBand,
+          it.x0,
+          it.x1 + (committed ? reach / committed.k : 0),
+          it.cy - half,
+          it.cy + half,
+        );
+      }),
+    [items, labels, committed, yBand],
+  );
   const shownRef = useRef<Set<string>>(new Set());
+  // One writer for the overlay's life (nodes React keeps keep their written values).
+  const [write] = useState(createWriter);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
     const tip = tipRef.current;
     if (!root || !tip) return;
     let opened: Viewport | null = null;
+    const nodes = nodesOf(root, byKey);
+    const nameBoxes = (v: Viewport) =>
+      [...streamNameBoxes(names, v, measure).values()].map((n) => n.box);
+    let edge = new Set<string>();
+    // Pan frames shift the items' group (viewport.ts, panShifting) and re-place only the items
+    // at the screen's edges.
+    const shift = panShifting(itemsRef.current!, (v) => {
+      const p = place(nodes, labels, v, viewport.band(), write, nameBoxes(v));
+      shownRef.current = p.shown;
+      edge = p.edge;
+    });
+    let band = viewport.band();
     const run = (v: Viewport) => {
-      shownRef.current = place(root, byKey, labels, v);
+      const changed = viewport.band() !== band;
+      band = viewport.band();
+      const dx = shift(v, changed);
+      if (dx !== null) place(nodes, labels, v, band, write, nameBoxes(v), { keys: edge, dx });
     };
     const v = viewport.get() ?? committed;
     if (v) run(v);
@@ -449,44 +561,53 @@ export function ItemsOverlay({
       svg.removeEventListener('pointerleave', onLeave);
       svg.removeEventListener('click', onClick, { capture: true });
     };
-  }, [labelsGroup, byKey, labels, viewport, committed, measure]);
+  }, [labelsGroup, byKey, labels, viewport, committed, measure, write, names]);
 
   if (!labelsGroup || items.length === 0) return null;
   return createPortal(
     <g ref={rootRef} className={`chart-items ${className}`}>
-      {items.map((it) => {
-        const label = labels.get(it.key);
-        const hit = Math.max(it.h, touchTarget);
-        return (
-          <g key={it.key} data-item={it.key} data-point={it.point || undefined}>
-            {it.point &&
-              (mark === 'glyph' ? (
-                <text className="item-mark" aria-hidden="true" y={it.cy + 5} fill={it.inkColor}>
-                  {EVENT_MARK}
+      <g ref={itemsRef} className="chart-item-nodes">
+        {rendered.map((it) => {
+          const label = labels.get(it.key);
+          const hit = Math.max(it.h, touchTarget);
+          return (
+            <g key={it.key} data-item={it.key} data-point={it.point || undefined}>
+              {it.point &&
+                (mark === 'glyph' ? (
+                  <text
+                    className="item-mark"
+                    aria-hidden="true"
+                    x={0}
+                    y={it.cy + 5}
+                    fill={it.inkColor}
+                  >
+                    {EVENT_MARK}
+                  </text>
+                ) : (
+                  <circle className="item-mark item-dot" cx={0} cy={it.cy} r={5} />
+                ))}
+              {label && (
+                <text
+                  className={`item-title item-title-${it.size}`}
+                  textAnchor={it.point ? 'start' : 'middle'}
+                  y={titleBaseline(it)}
+                  fill={it.inkColor}
+                >
+                  {label.text}
                 </text>
-              ) : (
-                <circle className="item-mark item-dot" cy={it.cy} r={5} />
-              ))}
-            {label && (
-              <text
-                className={`item-title item-title-${it.size}`}
-                textAnchor={it.point ? 'start' : 'middle'}
-                y={it.cy + (it.size === 'name' ? 5.5 : 4.5)}
-                fill={it.inkColor}
-              >
-                {label.text}
-              </text>
-            )}
-            <rect
-              className="item-hit"
-              data-select={it.key}
-              y={it.cy - hit / 2}
-              height={hit}
-              width={touchTarget}
-            />
-          </g>
-        );
-      })}
+              )}
+              <rect
+                className="item-hit"
+                data-select={it.key}
+                x={-touchTarget / 2}
+                y={it.cy - hit / 2}
+                height={hit}
+                width={touchTarget}
+              />
+            </g>
+          );
+        })}
+      </g>
       <g ref={tipRef} className="chart-tooltip item-tooltip" role="tooltip" visibility="hidden">
         <rect rx={6} />
         <text className="tooltip-name" />
@@ -500,7 +621,11 @@ export function ItemsOverlay({
 // --- The layer -----------------------------------------------------------------------------
 
 export default function EventLayer(props: LayerProps) {
-  const { tile, index, axis, laneY, t, viewport, committed } = props;
+  const { tile, index, axis, cfg, laneY, t, viewport, committed } = props;
+  const names = useMemo(
+    () => streamNames({ tile, index, axis, cfg, laneY }),
+    [tile, index, axis, cfg, laneY],
+  );
   const { ref, labelsGroup } = useLabelsGroup();
   const items = useMemo(
     () => eventItems({ tile, index, axis, laneY, t }),
@@ -515,6 +640,7 @@ export default function EventLayer(props: LayerProps) {
             key={it.key}
             className={it.dashed ? 'event-bar item-dashed' : 'event-bar'}
             data-event-bar={it.key.slice('event:'.length)}
+            {...yExtent(it.cy - BAR_PX / 2, it.cy + BAR_PX / 2)}
             x={it.x0}
             y={it.cy - BAR_PX / 2}
             width={it.x1 - it.x0}
@@ -527,8 +653,10 @@ export default function EventLayer(props: LayerProps) {
         items={items}
         className="chart-event-items"
         mark="glyph"
+        names={names}
         viewport={viewport}
         committed={committed}
+        yBand={props.yBand}
       />
     </g>
   );

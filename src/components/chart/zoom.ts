@@ -5,7 +5,8 @@
 //   transformed groups (geometry, overlay) and feeds the rAF-throttled viewport channel, which
 //   label layers read imperatively. React state is not touched.
 // - The store's committedViewport is updated once at gesture end, and in a long gesture (trackpad
-//   inertia) at most every COMMIT_EVERY_MS after LONG_GESTURE_MS.
+//   inertia, a long drag) after LONG_GESTURE_MS, only when the view has moved far from the last
+//   commit (movedFar), at most every COMMIT_EVERY_MS.
 //
 // Input: wheel zooms around the pointer; Shift + wheel and horizontal trackpad scroll pan;
 // trackpad pinch (wheel + ctrlKey) and two-finger touch pinch zoom; mouse drags pan. y is always 0.
@@ -38,9 +39,25 @@ import type { ViewportChannel } from './viewport';
 
 /** A wheel sequence ends after this long without a wheel event. */
 export const WHEEL_END_MS = 150;
-/** A gesture longer than this commits its viewport every COMMIT_EVERY_MS (inertia). */
+/**
+ * A gesture longer than this commits its viewport (inertia, a long drag) once the view has moved
+ * far enough that the layers need nodes they did not render (COMMIT_SHIFT, COMMIT_ZOOM: they
+ * render a screen either side), and at most every COMMIT_EVERY_MS.
+ */
 export const LONG_GESTURE_MS = 1000;
 export const COMMIT_EVERY_MS = 150;
+/** A pan of this share of the width, since the last commit, needs a commit. */
+export const COMMIT_SHIFT = 0.5;
+/** A zoom by this factor (either way), since the last commit, needs a commit. */
+export const COMMIT_ZOOM = 1.25;
+
+/** Whether the view moved far enough from the committed one to need a commit mid-gesture. */
+export function movedFar(from: View, to: View, width: number): boolean {
+  return (
+    Math.abs(to.x - from.x) >= COMMIT_SHIFT * width ||
+    Math.abs(Math.log(to.k / from.k)) >= Math.log(COMMIT_ZOOM)
+  );
+}
 /** focusOn leaves this share of the width around the item. */
 const FOCUS_FILL = 0.9;
 
@@ -127,11 +144,13 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
   let wheelTimer: ReturnType<typeof setTimeout> | undefined;
   let gestureStart: number | null = null;
   let lastCommit = 0;
+  let lastCommitted: View | null = null;
 
   const viewport = (t: View): Viewport => ({ x: t.x, k: t.k, width });
   const commit = () => {
     const t = zoomTransform(o.svg);
     lastCommit = now();
+    lastCommitted = { x: t.x, k: t.k };
     o.store.commitViewport(viewport(t));
   };
 
@@ -160,7 +179,8 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
       if (
         start !== null &&
         now() - start >= LONG_GESTURE_MS &&
-        now() - lastCommit >= COMMIT_EVERY_MS
+        now() - lastCommit >= COMMIT_EVERY_MS &&
+        (!lastCommitted || movedFar(lastCommitted, t, width))
       ) {
         commit();
       }
@@ -172,11 +192,16 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
       commit();
     });
 
+  // The chart's page rect, read once per wheel sequence: reading it on every wheel event would
+  // force a layout of the whole chart after the previous frame's label moves. A wheel sequence
+  // never scrolls the page (its events are cancelled), so the rect holds until it ends.
+  let wheelRect: DOMRect | null = null;
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
     if (!wheelActive) {
       wheelActive = true;
       gestureStart = now();
+      wheelRect = null;
     }
     const k = zoomTransform(o.svg).k;
     const horizontal = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
@@ -184,7 +209,7 @@ export function attachZoom(o: ZoomOptions): ZoomHandle {
       const dx = e.deltaX !== 0 ? e.deltaX : e.deltaY;
       behavior.translateBy(sel, -dx / k, 0);
     } else {
-      const r = o.svg.getBoundingClientRect();
+      const r = (wheelRect ??= o.svg.getBoundingClientRect());
       behavior.scaleBy(sel, 2 ** wheelDelta(e), [e.clientX - r.left, e.clientY - r.top]);
     }
     clearTimeout(wheelTimer);

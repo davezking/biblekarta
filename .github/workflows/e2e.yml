@@ -38,9 +38,24 @@ jobs:
       - name: Install Playwright browser (CI runners have none)
         run: pnpm exec playwright install --with-deps chromium
       - run: pnpm e2e
+      # The chart performance budgets (P2-S3-T7): stress seed, 4× CPU. Slow, so on pushes to
+      # phase-* only, not on PRs. Not blocking until P5-S2-T1 settles SVG vs Canvas for the
+      # streams: today's SVG numbers miss the frame budget on the stress seed (e2e/perf/README.md).
+      - name: Perf budgets (pushes to phase-* only)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/phase-')
+        continue-on-error: true
+        run: pnpm perf
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+      # The perf report (frame deltas, JS sizes, LCP), kept whether or not the budgets were met.
+      - uses: actions/upload-artifact@v4
+        if: always() && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/phase-')
+        with:
+          name: perf-report
+          path: playwright-report/perf/
+          retention-days: 30
+          if-no-files-found: ignore

@@ -14,7 +14,7 @@ import type { IndexFile, TileFile } from '../../../lib/core/datafiles';
 import type { T } from '../../../lib/i18n';
 import type { Axis, TimescaleConfig } from '../../../lib/layout/timescale';
 import type { Selection, Viewport } from '../state';
-import type { ViewportChannel } from '../viewport';
+import type { ViewportChannel, YBand } from '../viewport';
 
 export interface LayerProps {
   index: IndexFile;
@@ -29,6 +29,11 @@ export interface LayerProps {
   laneY: ReadonlyMap<string, number>;
   /** Total height of the visible lanes. */
   height: number;
+  /**
+   * The chart y range near the window (the page scrolls a tall chart): layers may leave nodes
+   * outside it unrendered. Changes only when the page scrolls well past it (one commit).
+   */
+  yBand: YBand;
   selection: Selection | null;
   t: T;
 }

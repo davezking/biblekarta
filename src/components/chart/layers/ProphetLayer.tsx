@@ -22,7 +22,8 @@ import {
   slotOf,
   type ScreenItem,
 } from './EventLayer';
-import { inkOn } from './LabelLayer';
+import { yExtent } from '../cull';
+import { inkOn, streamNames } from './LabelLayer';
 import type { LayerProps } from './types';
 import './items.css';
 
@@ -63,7 +64,11 @@ export function personItems(p: Input): ScreenItem[] {
 }
 
 export default function ProphetLayer(props: LayerProps) {
-  const { tile, index, axis, laneY, t, viewport, committed } = props;
+  const { tile, index, axis, cfg, laneY, t, viewport, committed } = props;
+  const names = useMemo(
+    () => streamNames({ tile, index, axis, cfg, laneY }),
+    [tile, index, axis, cfg, laneY],
+  );
   const { ref, labelsGroup } = useLabelsGroup();
   const items = useMemo(
     () => personItems({ tile, index, axis, laneY, t }),
@@ -78,6 +83,7 @@ export default function ProphetLayer(props: LayerProps) {
             key={it.key}
             className={it.dashed ? 'person-pill item-dashed' : 'person-pill'}
             data-person-span={it.key.slice('person:'.length)}
+            {...yExtent(it.cy - it.h / 2, it.cy + it.h / 2)}
             x={it.x0}
             y={it.cy - it.h / 2 + 2}
             width={it.x1 - it.x0}
@@ -90,8 +96,10 @@ export default function ProphetLayer(props: LayerProps) {
         items={items}
         className="chart-person-items"
         mark="dot"
+        names={names}
         viewport={viewport}
         committed={committed}
+        yBand={props.yBand}
       />
     </g>
   );
