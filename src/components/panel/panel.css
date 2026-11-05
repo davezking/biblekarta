@@ -1,0 +1,148 @@
+/* Panel (P2-S1-T4): side panel at ≥ 1024 px, bottom sheet below (DR-11, DR-12). Tokens only.
+   The page sets --panel-inset-top to the bottom of the chart's toolbar so the side panel never
+   covers it. No animation runs under prefers-reduced-motion (rule at the end). */
+
+.panel {
+  box-sizing: border-box;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: var(--vellum);
+  color: var(--ink);
+  border: var(--line-outline) solid var(--ink);
+  font-family: var(--font-manuscript);
+  overflow: hidden;
+}
+
+.panel:focus-visible {
+  outline: var(--line-strong) solid var(--ink-red);
+  outline-offset: calc(-1 * var(--line-strong));
+}
+
+/* Desktop: a side panel on the right, under the toolbar. Not modal. */
+.panel-side {
+  z-index: var(--z-panel);
+  inset-block: var(--panel-inset-top, 0) 0;
+  inset-inline-end: 0;
+  width: min(420px, 40vw);
+  border-inline-end: none;
+  border-block-end: none;
+  border-start-start-radius: var(--radius-lg);
+  animation: panel-slide-in var(--motion-base) ease-out;
+}
+
+/* Mobile: a bottom sheet, viewport − gap tall; half height shows its top half. */
+.panel-sheet {
+  z-index: var(--z-sheet);
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: calc(100dvh - var(--space-xl));
+  border-block-end: none;
+  border-start-start-radius: var(--radius-lg);
+  border-start-end-radius: var(--radius-lg);
+  transform: translateY(0);
+  transition: transform var(--motion-base) ease-out;
+  animation: panel-rise var(--motion-base) ease-out;
+}
+
+.panel-sheet[data-snap='half'] {
+  transform: translateY(calc(100% - 50dvh));
+}
+
+.panel-sheet[data-dragging] {
+  transition: none;
+}
+
+.panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  background: var(--vellum-shade);
+}
+
+.panel-handle {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.panel-handle:focus-visible,
+.panel-close:focus-visible {
+  outline: var(--line-strong) solid var(--ink-red);
+  outline-offset: calc(-1 * var(--line-strong));
+}
+
+.panel-handle-bar {
+  width: 48px;
+  height: var(--space-xs);
+  border-radius: var(--radius-pill);
+  background: var(--ink-axis);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: none;
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-lg);
+  border-block-end: var(--line-hairline) solid var(--vellum-edge);
+}
+
+.panel-side .panel-header {
+  padding-block-start: var(--space-md);
+}
+
+.panel-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 400;
+  color: var(--ink-red);
+}
+
+.panel-close {
+  flex: none;
+  font-size: var(--font-size-lg);
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-lg);
+}
+
+@keyframes panel-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes panel-rise {
+  from {
+    translate: 0 100%;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-side,
+  .panel-sheet {
+    transition: none;
+    animation: none;
+  }
+}

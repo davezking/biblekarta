@@ -30,5 +30,8 @@
   "anchor.confidence": "Confidence: {level}",
   "anchor.confidence.high": "high",
   "anchor.confidence.medium": "medium",
-  "anchor.confidence.low": "low"
+  "anchor.confidence.low": "low",
+  "ui.close": "Close",
+  "ui.open_menu": "Open menu",
+  "panel.handle": "Resize the panel"
 }
