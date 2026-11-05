@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import { act, useState } from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createT } from '../../lib/i18n';
+import CheckboxMenu from '../ui/CheckboxMenu';
+import Disclosure from '../ui/Disclosure';
 import { cleanup, click, expectHitArea, key, loadCss, pointer, render } from '../ui/ui.testutil';
 import Panel, { CLOSE_DISTANCE, snapAfterDrag, snapOffset, SHEET_TOP_GAP } from './Panel';
 
@@ -174,7 +176,10 @@ describe('bottom sheet gestures', () => {
     await pointer(handle, 'pointermove', { clientY: 600 + dy / 2 });
     await pointer(handle, 'pointermove', { clientY: 600 + dy });
     await pointer(handle, 'pointerup', { clientY: 600 + dy });
-    await click(handle); // the click a browser sends after the lift; must not toggle
+    // The click a mouse sends after the lift (detail 1); it must not toggle.
+    await act(async () => {
+      handle.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    });
   }
 
   it('drags up to full height, where it is modal and traps focus', async () => {
@@ -185,7 +190,7 @@ describe('bottom sheet gestures', () => {
     expect(d.dataset.snap).toBe('full');
     expect(d.getAttribute('aria-modal')).toBe('true');
     expect(handleOf(d).getAttribute('aria-expanded')).toBe('true');
-    expect(d.style.transform).toBe(''); // the drag offset is cleared after snapping
+    expect(d.style.height).toBe(''); // the drag size is cleared after snapping
     expect(document.querySelector('.panel-backdrop')).not.toBeNull();
 
     // Focus trap: Tab from the last control wraps to the first, Shift+Tab back again.
@@ -206,7 +211,8 @@ describe('bottom sheet gestures', () => {
     const handle = handleOf(d);
     await pointer(handle, 'pointerdown', { clientY: 600 });
     await pointer(handle, 'pointermove', { clientY: 500 });
-    expect(d.style.transform).toBe(`translateY(${snapOffset('half', VH) - 100}px)`);
+    // The sheet is resized (top edge follows the finger), never moved off screen.
+    expect(d.style.height).toBe(`${VH / 2 + 100}px`);
     expect(d.hasAttribute('data-dragging')).toBe(true);
     await pointer(handle, 'pointerup', { clientY: 500 });
     expect(d.hasAttribute('data-dragging')).toBe(false);
@@ -250,6 +256,100 @@ describe('bottom sheet gestures', () => {
   });
 });
 
+describe('review fixes', () => {
+  function Rich() {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <button type="button" id="opener" onClick={() => setOpen(true)}>
+          open
+        </button>
+        <Panel open={open} onClose={() => setOpen(false)} title="t" t={createT('en')}>
+          <button type="button" id="visible">
+            v
+          </button>
+          <CheckboxMenu
+            label="m"
+            items={[{ id: 'a', label: 'a', checked: true }]}
+            onToggle={() => {}}
+          />
+          <Disclosure summary="how">
+            <button type="button" id="hidden-inside">
+              h
+            </button>
+          </Disclosure>
+        </Panel>
+      </>
+    );
+  }
+
+  async function openRich() {
+    stubMedia(false);
+    const r = await render(<Rich />);
+    const opener = r.container.querySelector<HTMLButtonElement>('#opener')!;
+    opener.focus();
+    await click(opener);
+    const d = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    return { d, opener, handle: d.querySelector<HTMLButtonElement>('.panel-handle')! };
+  }
+
+  it('the focus trap skips controls in a closed Disclosure', async () => {
+    const { d, handle } = await openRich();
+    await click(handle);
+    expect(d.dataset.snap).toBe('full');
+    const summary = d.querySelector<HTMLElement>('.ui-disclosure-summary')!;
+    summary.focus();
+    await key(summary, 'Tab');
+    expect(document.activeElement).toBe(handle); // wrapped to the first control
+    await key(handle, 'Tab', { shiftKey: true });
+    expect(document.activeElement).toBe(summary);
+  });
+
+  it('a keyboard activation of the handle toggles even right after a touch drag', async () => {
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(VH);
+    const { d, handle } = await openRich();
+    await pointer(handle, 'pointerdown', { clientY: 600 });
+    await pointer(handle, 'pointermove', { clientY: 620 });
+    await pointer(handle, 'pointerup', { clientY: 620 }); // stays at half; no click follows
+    expect(d.dataset.snap).toBe('half');
+    await act(async () => {
+      handle.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    });
+    expect(d.dataset.snap).toBe('full');
+  });
+
+  it('the click a mouse sends right after a drag does not toggle', async () => {
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(VH);
+    const { d, handle } = await openRich();
+    await pointer(handle, 'pointerdown', { clientY: 600, pointerType: 'mouse' });
+    await pointer(handle, 'pointermove', { clientY: 620, pointerType: 'mouse' });
+    await pointer(handle, 'pointerup', { clientY: 620, pointerType: 'mouse' });
+    await act(async () => {
+      handle.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    });
+    expect(d.dataset.snap).toBe('half');
+  });
+
+  it('Esc in a menu inside the panel closes the menu, not the panel', async () => {
+    const { d } = await openRich();
+    const menuButton = d.querySelector<HTMLButtonElement>('.ui-menu > button')!;
+    await click(menuButton);
+    expect(menuButton.getAttribute('aria-expanded')).toBe('true');
+    await key(document.activeElement!, 'Escape');
+    expect(menuButton.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(menuButton);
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    await key(menuButton, 'Escape');
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('half height: the sheet is half the viewport tall, so nothing focusable is off screen', () => {
+    const css = readFileSync('src/components/panel/panel.css', 'utf8');
+    expect(css).toMatch(/\.panel-sheet\[data-snap='half'\] \{\s*height: 50dvh;/);
+    expect(css).not.toMatch(/\.panel-sheet[^{]*\{[^}]*translateY/);
+  });
+});
+
 describe('reduced motion', () => {
   it('turns off every panel and primitive animation under prefers-reduced-motion', () => {
     for (const [file, animated] of [
@@ -282,7 +382,7 @@ describe('reduced motion', () => {
     const before = getComputedStyle(dialog()!);
     // happy-dom computes the shorthands only.
     expect(before.animation).toContain('panel-rise');
-    expect(before.transition).toContain('transform');
+    expect(before.transition).toContain('height');
     settings.prefersReducedMotion = 'reduce';
     try {
       // A fresh style sheet makes happy-dom recompute styles under the new setting.

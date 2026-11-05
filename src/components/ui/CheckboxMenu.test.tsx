@@ -88,6 +88,25 @@ describe('CheckboxMenu', () => {
     expect(button.getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('closes when focus moves out of it, not when it moves inside', async () => {
+    const { container } = await render(
+      <>
+        <Harness />
+        <button type="button" id="after">
+          after
+        </button>
+      </>,
+    );
+    const button = container.querySelector<HTMLButtonElement>('.ui-menu > button')!;
+    await click(button);
+    const [a, b] = [...container.querySelectorAll<HTMLInputElement>('input')];
+    await act(async () => b!.focus());
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(a).toBeDefined();
+    await act(async () => container.querySelector<HTMLButtonElement>('#after')!.focus());
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+  });
+
   it('defaults its name to ui.open_menu', async () => {
     const t = createT('en');
     const { container } = await render(<CheckboxMenu items={[]} onToggle={() => {}} t={t} />);

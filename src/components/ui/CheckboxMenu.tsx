@@ -1,8 +1,9 @@
 // CheckboxMenu: a button that opens a popover of checkboxes (e.g. the lane toggles). It follows
 // the disclosure pattern (aria-expanded / aria-controls on the button, a labelled group of native
 // checkboxes) rather than role="menu", so Tab and Space work as they do everywhere else.
-// Opening moves focus to the first checkbox; Esc closes it and returns focus to the button;
-// a press outside closes it.
+// Opening moves focus to the first checkbox; Esc closes it and returns focus to the button (and
+// goes no further, so a panel around the menu stays open); a press outside, or focus leaving the
+// menu, closes it.
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createT, type T } from '../../lib/i18n';
 import './ui.css';
@@ -46,11 +47,10 @@ export default function CheckboxMenu({
   useEffect(() => {
     if (!open) return;
     popoverRef.current?.querySelector<HTMLElement>('input, button')?.focus();
+    // Esc with focus outside the menu (e.g. after a click on the page) still closes it.
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.preventDefault();
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
       setOpen(false);
-      buttonRef.current?.focus();
     };
     const onDown = (e: PointerEvent) => {
       if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
@@ -64,7 +64,21 @@ export default function CheckboxMenu({
   }, [open]);
 
   return (
-    <div ref={wrapRef} className={className ? `ui-menu ${className}` : 'ui-menu'}>
+    <div
+      ref={wrapRef}
+      className={className ? `ui-menu ${className}` : 'ui-menu'}
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape' || !open) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setOpen(false);
+        buttonRef.current?.focus();
+      }}
+      onBlur={(e) => {
+        const to = e.relatedTarget as Node | null;
+        if (open && to && !wrapRef.current?.contains(to)) setOpen(false);
+      }}
+    >
       <button
         ref={buttonRef}
         type="button"

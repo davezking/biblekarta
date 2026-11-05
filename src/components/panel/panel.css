@@ -31,7 +31,8 @@
   animation: panel-slide-in var(--motion-base) ease-out;
 }
 
-/* Mobile: a bottom sheet, viewport − gap tall; half height shows its top half. */
+/* Mobile: a bottom sheet. Full height is viewport − gap; half height is half the viewport.
+   It is resized (not moved), so everything focusable in it is on screen. */
 .panel-sheet {
   z-index: var(--z-sheet);
   inset-inline: 0;
@@ -40,13 +41,12 @@
   border-block-end: none;
   border-start-start-radius: var(--radius-lg);
   border-start-end-radius: var(--radius-lg);
-  transform: translateY(0);
-  transition: transform var(--motion-base) ease-out;
+  transition: height var(--motion-base) ease-out;
   animation: panel-rise var(--motion-base) ease-out;
 }
 
 .panel-sheet[data-snap='half'] {
-  transform: translateY(calc(100% - 50dvh));
+  height: 50dvh;
 }
 
 .panel-sheet[data-dragging] {

@@ -1,4 +1,5 @@
-// Tooltip: a short text for its trigger, shown on mouse hover, on keyboard focus, or after a
+// Tooltip: a short text for its trigger, shown on mouse hover, on keyboard focus (:focus-visible,
+// so not on the focus a tap gives a button on Android), or after a
 // long-press on touch. Esc hides it. The bubble is always in the DOM (hidden while not shown) and
 // the wrapper points the trigger's description at it, so a screen reader reads it on focus.
 // The trigger (the child) brings its own ≥ 44 px hit area; the bubble takes no pointer events.
@@ -14,6 +15,14 @@ import {
 import './ui.css';
 
 export const LONG_PRESS_MS = 500;
+
+function focusVisible(el: Element): boolean {
+  try {
+    return el.matches(':focus-visible');
+  } catch {
+    return true; // an engine without :focus-visible: show on any focus
+  }
+}
 
 export interface TooltipProps {
   content: string;
@@ -90,7 +99,10 @@ export default function Tooltip({ content, children, lang }: TooltipProps) {
       onContextMenu={(e) => {
         if (longPressed.current || pressTimer.current) e.preventDefault();
       }}
-      onFocus={() => setShown(true)}
+      onFocus={(e) => {
+        // Keyboard focus only: a tap focuses a button on Android, and a tap isn't a long-press.
+        if (focusVisible(e.target)) setShown(true);
+      }}
       onBlur={() => setShown(false)}
     >
       {trigger}

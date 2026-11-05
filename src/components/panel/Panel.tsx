@@ -2,8 +2,9 @@
 // - ≥ 1024 px: a side panel on the right. It isn't modal, so the chart behind stays usable.
 //   It starts below `--panel-inset-top` (set by the page) so it doesn't cover the chart's toolbar.
 // - < 1024 px: a bottom sheet with a drag handle and two snap points, half and full height.
-//   Dragging the handle moves it; a swipe down from half height closes it. At full height it is
-//   modal and traps focus.
+//   The sheet is resized, not translated, so everything in its tab order is on screen; the body
+//   scrolls inside it. Dragging the handle moves its top edge; a swipe down from half height closes
+//   it. At full height it is modal and traps focus.
 // Both are role="dialog", labelled by the title. Esc or the close button closes it. Focus moves
 // into the panel when it opens and returns to the element that opened it when it closes.
 // Animations use the motion tokens; panel.css switches them off under prefers-reduced-motion.
@@ -15,6 +16,7 @@ import {
   useState,
   useSyncExternalStore,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent,
   type ReactNode,
 } from 'react';
@@ -45,7 +47,7 @@ export const CLOSE_DISTANCE = 80;
 /** Drags shorter than this count as a tap on the handle, in px. */
 export const TAP_SLOP = 6;
 
-/** The sheet's offset (translateY, px) at a snap point. The sheet is `viewport − gap` tall. */
+/** How far (px) the sheet's top edge sits below its full-height position at a snap point. */
 export function snapOffset(snap: Snap, viewportHeight: number): number {
   return snap === 'full' ? 0 : Math.max(0, viewportHeight - SHEET_TOP_GAP - viewportHeight / 2);
 }
@@ -113,14 +115,15 @@ export default function Panel({ open, onClose, title, children, lang, t = defaul
   const modal = !desktop && snap === 'full';
   const viewportHeight = () => window.innerHeight;
 
+  /** During a drag, sizes the sheet so its top edge sits `px` below full height; null resets. */
   const setOffset = (px: number | null) => {
     const el = dialogRef.current;
     if (!el) return;
     if (px === null) {
-      el.style.removeProperty('transform');
+      el.style.removeProperty('height');
       el.removeAttribute('data-dragging');
     } else {
-      el.style.transform = `translateY(${px}px)`;
+      el.style.height = `${Math.max(0, viewportHeight() - SHEET_TOP_GAP - px)}px`;
       el.setAttribute('data-dragging', '');
     }
   };
@@ -152,8 +155,10 @@ export default function Panel({ open, onClose, title, children, lang, t = defaul
     drag.current = null;
     setOffset(null);
   };
-  const onHandleClick = () => {
-    if (dragged.current) {
+  const onHandleClick = (e: MouseEvent<HTMLButtonElement>) => {
+    // Swallow only the click a pointer sends right after a drag. Browsers send none after a
+    // touch drag, so a keyboard activation (detail 0) always toggles, whatever came before.
+    if (dragged.current && e.detail !== 0) {
       dragged.current = false;
       return;
     }
@@ -172,13 +177,17 @@ export default function Panel({ open, onClose, title, children, lang, t = defaul
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
+      if (e.defaultPrevented) return; // handled inside (e.g. a menu closing)
       e.preventDefault();
       e.stopPropagation();
       onClose();
       return;
     }
     if (e.key !== 'Tab' || !modal) return;
-    const items = [...dialogRef.current!.querySelectorAll<HTMLElement>(FOCUSABLE)];
+    // Controls inside a hidden region (e.g. a closed Disclosure) can't take focus: skip them.
+    const items = [...dialogRef.current!.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+      (el) => !el.closest('[hidden], [inert]'),
+    );
     if (items.length === 0) {
       e.preventDefault();
       return;

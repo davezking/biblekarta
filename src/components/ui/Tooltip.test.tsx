@@ -9,6 +9,7 @@ beforeAll(() => loadCss('src/components/ui/ui.css'));
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 async function mount(onClick = vi.fn()) {
@@ -44,6 +45,16 @@ describe('Tooltip', () => {
     await focus(trigger);
     expect(tip.hidden).toBe(false);
     await act(async () => trigger.blur());
+    expect(tip.hidden).toBe(true);
+  });
+
+  it('does not show on a focus that is not :focus-visible (a tap on Android)', async () => {
+    const { trigger, tip } = await mount();
+    const matches = trigger.matches.bind(trigger);
+    vi.spyOn(trigger, 'matches').mockImplementation((sel: string) =>
+      sel === ':focus-visible' ? false : matches(sel),
+    );
+    await focus(trigger);
     expect(tip.hidden).toBe(true);
   });
 
