@@ -24,8 +24,26 @@ import type { Axis } from '../../../lib/layout/timescale';
 import { yExtent } from '../cull';
 import { createWriter, type Write } from '../dom-writer';
 import type { Viewport } from '../state';
-import { atEdge, nearCommitted, nearView, panShifting, type YBand } from '../viewport';
-import { createMeasure, inkOn, LONG_PRESS_MS, LONG_PRESS_SLOP_PX, movedPast } from './LabelLayer';
+import {
+  atEdge,
+  CULL_MARGIN_PX,
+  nearCommitted,
+  nearView,
+  panShifting,
+  type YBand,
+} from '../viewport';
+import {
+  createMeasure,
+  inkOn,
+  LONG_PRESS_MS,
+  LONG_PRESS_SLOP_PX,
+  movedPast,
+  overlaps,
+  streamNameBoxes,
+  streamNames,
+  type Box,
+  type StreamName,
+} from './LabelLayer';
 import type { LayerProps } from './types';
 import './items.css';
 
@@ -210,6 +228,18 @@ export function itemLabels(
 
 const r1 = (v: number) => String(Math.round(v * 10) / 10);
 
+/** Title font sizes, px (items.css matches). */
+const TITLE_PX = { name: 16, years: 13 } as const;
+/** A title's baseline below its slot's centre, px. */
+const titleBaseline = (it: Pick<ScreenItem, 'cy' | 'size'>) =>
+  it.cy + (it.size === 'name' ? 5.5 : 4.5);
+
+/** The screen box of an item's title starting at screen x `x0`. */
+export function titleBox(it: Pick<ScreenItem, 'cy' | 'size'>, x0: number, width: number): Box {
+  const base = titleBaseline(it);
+  return [x0, x0 + width, base - TITLE_PX[it.size], base + 3];
+}
+
 /** An item's nodes, looked up once per render. */
 interface ItemNodes {
   g: SVGGElement;
@@ -247,11 +277,14 @@ function place(
   v: Viewport,
   band: YBand,
   write: Write,
+  names: readonly Box[] = [],
   only?: { keys: Set<string>; dx: number },
 ): { shown: Set<string>; edge: Set<string> } {
   const shown = new Set<string>();
   const edge = new Set<string>();
   const dx = only?.dx ?? 0;
+  // Stream names sit at the left of the screen: items near them are re-checked on pan frames.
+  const nameZone = Math.max(-Infinity, ...names.map((b) => b[1])) + CULL_MARGIN_PX;
   for (const n of nodes) {
     const { it } = n;
     if (only && !only.keys.has(it.key)) continue;
@@ -263,7 +296,7 @@ function place(
     const half = Math.max(it.h, touchTarget) / 2;
     const l = Math.min(sx0, mid - reach);
     const r = Math.max(sx1, mid + reach);
-    if (atEdge(v, l, r)) edge.add(it.key);
+    if (atEdge(v, l, r) || (l < nameZone && r > -CULL_MARGIN_PX)) edge.add(it.key);
     const near = nearView(v, band, l, r, it.cy - half, it.cy + half);
     write(n.g, 'display', near ? null : 'none');
     if (!near) continue;
@@ -291,6 +324,11 @@ function place(
       const halfW = label.width / 2;
       x = Math.min(Math.max(mid, left + halfW), right - halfW);
       show = right - left >= label.width;
+    }
+    // Never over a stream name (as LabelLayer keeps reign labels off them).
+    if (show && names.length) {
+      const x0 = anchor === 'start' ? x : anchor === 'end' ? x - label.width : x - label.width / 2;
+      show = !names.some((b) => overlaps(titleBox(it, x0, label.width), b));
     }
     if (show) {
       write(n.text, 'x', r1(x - mid));
@@ -358,12 +396,15 @@ interface ItemsOverlayProps extends Pick<LayerProps, 'viewport' | 'committed' | 
   className: string;
   /** The mark a point item gets: the ፨ glyph (events) or a dot (people). */
   mark: 'glyph' | 'dot';
+  /** The stream names (LabelLayer letters them): titles keep off them. */
+  names: readonly StreamName[];
 }
 
 /** Marks, titles, hit targets and the tooltip of screen-space items, portaled into the labels group. */
 export function ItemsOverlay({
   labelsGroup,
   items,
+  names,
   className,
   mark,
   viewport,
@@ -407,11 +448,13 @@ export function ItemsOverlay({
     if (!root || !tip) return;
     let opened: Viewport | null = null;
     const nodes = nodesOf(root, byKey);
+    const nameBoxes = (v: Viewport) =>
+      [...streamNameBoxes(names, v, measure).values()].map((n) => n.box);
     let edge = new Set<string>();
     // Pan frames shift the items' group (viewport.ts, panShifting) and re-place only the items
     // at the screen's edges.
     const shift = panShifting(itemsRef.current!, (v) => {
-      const p = place(nodes, labels, v, viewport.band(), write);
+      const p = place(nodes, labels, v, viewport.band(), write, nameBoxes(v));
       shownRef.current = p.shown;
       edge = p.edge;
     });
@@ -420,7 +463,7 @@ export function ItemsOverlay({
       const changed = viewport.band() !== band;
       band = viewport.band();
       const dx = shift(v, changed);
-      if (dx !== null) place(nodes, labels, v, band, write, { keys: edge, dx });
+      if (dx !== null) place(nodes, labels, v, band, write, nameBoxes(v), { keys: edge, dx });
     };
     const v = viewport.get() ?? committed;
     if (v) run(v);
@@ -518,7 +561,7 @@ export function ItemsOverlay({
       svg.removeEventListener('pointerleave', onLeave);
       svg.removeEventListener('click', onClick, { capture: true });
     };
-  }, [labelsGroup, byKey, labels, viewport, committed, measure, write]);
+  }, [labelsGroup, byKey, labels, viewport, committed, measure, write, names]);
 
   if (!labelsGroup || items.length === 0) return null;
   return createPortal(
@@ -547,7 +590,7 @@ export function ItemsOverlay({
                 <text
                   className={`item-title item-title-${it.size}`}
                   textAnchor={it.point ? 'start' : 'middle'}
-                  y={it.cy + (it.size === 'name' ? 5.5 : 4.5)}
+                  y={titleBaseline(it)}
                   fill={it.inkColor}
                 >
                   {label.text}
@@ -578,7 +621,11 @@ export function ItemsOverlay({
 // --- The layer -----------------------------------------------------------------------------
 
 export default function EventLayer(props: LayerProps) {
-  const { tile, index, axis, laneY, t, viewport, committed } = props;
+  const { tile, index, axis, cfg, laneY, t, viewport, committed } = props;
+  const names = useMemo(
+    () => streamNames({ tile, index, axis, cfg, laneY }),
+    [tile, index, axis, cfg, laneY],
+  );
   const { ref, labelsGroup } = useLabelsGroup();
   const items = useMemo(
     () => eventItems({ tile, index, axis, laneY, t }),
@@ -606,6 +653,7 @@ export default function EventLayer(props: LayerProps) {
         items={items}
         className="chart-event-items"
         mark="glyph"
+        names={names}
         viewport={viewport}
         committed={committed}
         yBand={props.yBand}

@@ -153,7 +153,7 @@ export function reignLabelData(p: LabelInput): ReignLabelData[] {
   return out;
 }
 
-interface StreamName {
+export interface StreamName {
   id: string;
   name: string;
   ink: string;
@@ -168,7 +168,8 @@ function afterFork(x0: number, axis: Axis, cfg: LayerProps['cfg']): number {
   return at.band ? x0 : yearToX(at.year + FORK_YEARS, axis, cfg);
 }
 
-function streamNames(p: Omit<LabelInput, 't'>): StreamName[] {
+/** Every stream's name, with its span and baseline, on the current axis. */
+export function streamNames(p: Omit<LabelInput, 't'>): StreamName[] {
   const meta = new Map(p.index.streams.map((s) => [s.id, s]));
   const out: StreamName[] = [];
   for (const band of p.tile.axes[p.axis].bands) {
@@ -210,8 +211,32 @@ interface Placed {
   named: Set<string>;
 }
 
-type Box = [x0: number, x1: number, y0: number, y1: number];
-const overlaps = (a: Box, b: Box) => a[0] < b[1] && a[1] > b[0] && a[2] < b[3] && a[3] > b[2];
+/** A screen box: [x0, x1, y0, y1]. */
+export type Box = [x0: number, x1: number, y0: number, y1: number];
+export const overlaps = (a: Box, b: Box) =>
+  a[0] < b[1] && a[1] > b[0] && a[2] < b[3] && a[3] > b[2];
+
+/**
+ * Where each stream name sits on screen: in the visible part of its stream, at its left. Names
+ * that do not fit there are left out. Pure, so other layers (EventLayer's titles) can keep off the
+ * names without reading them from the DOM.
+ */
+export function streamNameBoxes(
+  names: readonly StreamName[],
+  v: Viewport,
+  measure: Measure,
+): Map<string, { x: number; box: Box }> {
+  const sx = (x: number) => v.k * x + v.x;
+  const out = new Map<string, { x: number; box: Box }>();
+  for (const n of names) {
+    const w = measure(n.name, 'name') * (STREAM_NAME_PX / NAME_PX);
+    const x = Math.max(sx(n.x0), 0) + STREAM_NAME_INSET_PX;
+    if (x + w <= Math.min(sx(n.x1), v.width) - STREAM_NAME_INSET_PX) {
+      out.set(n.id, { x, box: [x, x + w, n.y - STREAM_NAME_PX, n.y + 4] });
+    }
+  }
+  return out;
+}
 
 /** The label nodes, looked up once per render rather than on every viewport frame. */
 interface Nodes {
@@ -236,18 +261,16 @@ function placeNames(
   measure: Measure,
   write: Write,
 ): Map<string, Box> {
-  const sx = (x: number) => v.k * x + v.x;
+  const placed = streamNameBoxes(names, v, measure);
   const nameBoxes = new Map<string, Box>();
   for (const n of names) {
     const el = nodes.names.get(n.id);
     if (!el) continue;
-    const w = measure(n.name, 'name') * (STREAM_NAME_PX / NAME_PX);
-    const x = Math.max(sx(n.x0), 0) + STREAM_NAME_INSET_PX;
-    const fits = x + w <= Math.min(sx(n.x1), v.width) - STREAM_NAME_INSET_PX;
-    if (fits) {
-      write(el, 'x', String(Math.round(x * 10) / 10));
+    const at = placed.get(n.id);
+    if (at) {
+      write(el, 'x', String(Math.round(at.x * 10) / 10));
       write(el, 'visibility', null);
-      nameBoxes.set(n.id, [x, x + w, n.y - STREAM_NAME_PX, n.y + 4]);
+      nameBoxes.set(n.id, at.box);
     } else {
       write(el, 'visibility', 'hidden');
     }
