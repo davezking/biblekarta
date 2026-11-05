@@ -209,23 +209,23 @@ describe('EventLayer', () => {
         controller.setView({ x: 0, k: 1 });
         vi.advanceTimersByTime(20);
       });
-      const hit = item(svg, 'temple-built').querySelector('rect.item-hit')!;
-      const x0 = Number(hit.getAttribute('x'));
+      const g = item(svg, 'temple-built');
+      // The item's own translate, inside the items' group that pan frames shift as a whole.
+      const tx = (el: Element | null) =>
+        Number(/translate\(([-\d.]+),/.exec(el?.getAttribute('transform') ?? '')?.[1] ?? 0);
+      const at = () => tx(g) + tx(g.closest('g.chart-item-nodes'));
+      const x0 = at();
       const before = commits.count;
       for (let i = 0; i < 5; i++) {
         act(() => {
           svg.dispatchEvent(
-            new WheelEvent('wheel', {
-              deltaY: 10,
-              shiftKey: true,
-              bubbles: true,
-              cancelable: true,
-            }),
+            // A horizontal wheel pans (happy-dom drops shiftKey on synthetic wheel events).
+            new WheelEvent('wheel', { deltaX: 10, bubbles: true, cancelable: true }),
           );
           vi.advanceTimersByTime(20);
         });
       }
-      expect(Number(hit.getAttribute('x'))).not.toBeCloseTo(x0, 1);
+      expect(at()).toBeCloseTo(x0 - 50, 1);
       expect(commits.count).toBe(before);
     } finally {
       vi.useRealTimers();

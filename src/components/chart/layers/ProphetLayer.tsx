@@ -22,6 +22,7 @@ import {
   slotOf,
   type ScreenItem,
 } from './EventLayer';
+import { yExtent } from '../cull';
 import { inkOn } from './LabelLayer';
 import type { LayerProps } from './types';
 import './items.css';
@@ -78,6 +79,7 @@ export default function ProphetLayer(props: LayerProps) {
             key={it.key}
             className={it.dashed ? 'person-pill item-dashed' : 'person-pill'}
             data-person-span={it.key.slice('person:'.length)}
+            {...yExtent(it.cy - it.h / 2, it.cy + it.h / 2)}
             x={it.x0}
             y={it.cy - it.h / 2 + 2}
             width={it.x1 - it.x0}
@@ -92,6 +94,7 @@ export default function ProphetLayer(props: LayerProps) {
         mark="dot"
         viewport={viewport}
         committed={committed}
+        yBand={props.yBand}
       />
     </g>
   );

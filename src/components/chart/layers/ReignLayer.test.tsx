@@ -76,7 +76,10 @@ describe('ReignLayer', () => {
     const lanes = data.index.layout!.scholarly.lanes;
     const { laneY } = placeLanes(lanes, []);
     for (const r of data.tile.axes.scholarly.reigns) {
-      const ref = /^url\(#(.+)\)$/.exec(seg(svg, r.reign_id).getAttribute('clip-path')!)![1]!;
+      // The clip sits on the stream's group of segments.
+      const group = seg(svg, r.reign_id).closest('g[data-reign-stream]')!;
+      expect(group.getAttribute('data-reign-stream')).toBe(r.stream_id);
+      const ref = /^url\(#(.+)\)$/.exec(group.getAttribute('clip-path')!)![1]!;
       const clip = svg.querySelector(`clipPath[id="${ref}"]`)!;
       const band = data.tile.axes.scholarly.bands.find((b) => b.stream_id === r.stream_id)!;
       const path = clip.querySelector('path')!;

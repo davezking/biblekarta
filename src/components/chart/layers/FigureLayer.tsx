@@ -10,10 +10,13 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Person } from '../../../lib/core/schema';
 import type { Measure } from '../../../lib/layout/lod';
 import Figure from '../../figures/Figure';
+import { createWriter } from '../dom-writer';
 import type { Viewport } from '../state';
+import { atEdge, panShifting } from '../viewport';
 import { POINT_MAX_PX, slotOf } from './EventLayer';
 import { createMeasure, reignLabelData } from './LabelLayer';
 import { reignBoxes } from './ReignLayer';
+import { memoIgnoringCommitted } from './memo';
 import type { LayerProps } from './types';
 import './items.css';
 
@@ -113,10 +116,12 @@ export function figureX(
   return right - left >= s.size ? left : null;
 }
 
-export default function FigureLayer(props: LayerProps) {
-  const { tile, index, axis, cfg, laneY, t, viewport, committed } = props;
+function FigureLayer(props: LayerProps) {
+  const { tile, index, axis, cfg, laneY, t, viewport, committed, yBand } = props;
   const ref = useRef<SVGGElement>(null);
   const [measure] = useState(createMeasure);
+  // One writer for the layer's life (nodes React keeps keep their written values).
+  const [write] = useState(createWriter);
   const slots = useMemo(
     () => figureSlots({ tile, index, axis, cfg, laneY, t }, measure),
     [tile, index, axis, cfg, laneY, t, measure],
@@ -128,29 +133,62 @@ export default function FigureLayer(props: LayerProps) {
     const nodes = [...root.querySelectorAll<SVGGElement>('g[data-figure]')].map(
       (g) => [g, bySlot.get(g.dataset.figure!)!] as const,
     );
-    const run = (v: Viewport) => {
+    let edge = new Set<string>();
+    /** Places the figures (all, or just `only`, inside a group shifted by `dx`). */
+    const placeAll = (v: Viewport, only?: { keys: Set<string>; dx: number }) => {
+      const band = viewport.band();
+      const nextEdge = new Set<string>();
       for (const [g, s] of nodes) {
-        const x = s ? figureX(s, v) : null;
+        if (!s || (only && !only.keys.has(s.key))) continue;
+        if (atEdge(v, v.k * s.x0 + v.x, v.k * s.x1 + v.x)) nextEdge.add(s.key);
+        const x =
+          s.cy + s.size / 2 >= band[0] && s.cy - s.size / 2 <= band[1] ? figureX(s, v) : null;
+        // A hidden figure is also out of layout and paint (display: none).
         if (x === null) {
-          g.setAttribute('visibility', 'hidden');
+          write(g, 'visibility', 'hidden');
+          write(g, 'display', 'none');
           continue;
         }
-        g.setAttribute('transform', `translate(${Math.round(x * 10) / 10},${s.cy - s.size / 2})`);
-        g.removeAttribute('visibility');
+        const left = Math.round((x - (only?.dx ?? 0)) * 10) / 10;
+        write(g, 'transform', `translate(${left},${s.cy - s.size / 2})`);
+        write(g, 'visibility', null);
+        write(g, 'display', null);
       }
+      if (!only) edge = nextEdge;
+    };
+    // Pan frames shift the figures' group (viewport.ts, panShifting) and re-place only the
+    // figures at the screen's edges.
+    const shift = panShifting(root, (v) => placeAll(v));
+    let band = viewport.band();
+    const run = (v: Viewport) => {
+      const changed = viewport.band() !== band;
+      band = viewport.band();
+      const dx = shift(v, changed);
+      if (dx !== null) placeAll(v, { keys: edge, dx });
     };
     const v = viewport.get() ?? committed;
     if (v) run(v);
     return viewport.subscribe(run);
-  }, [slots, viewport, committed]);
+  }, [slots, viewport, committed, write]);
 
   return (
     <g ref={ref} className="chart-figures" aria-hidden="true">
-      {slots.map((s) => (
-        <g key={s.key} data-figure={s.key} data-person={s.person.id} visibility="hidden">
-          <Figure kind={s.person.figure_kind} tone={s.person.figure_tone} size={s.size} />
-        </g>
-      ))}
+      {slots
+        .filter((s) => s.cy + s.size / 2 >= yBand[0] && s.cy - s.size / 2 <= yBand[1])
+        .map((s) => (
+          <g
+            key={s.key}
+            data-figure={s.key}
+            data-person={s.person.id}
+            visibility="hidden"
+            display="none"
+          >
+            <Figure kind={s.person.figure_kind} tone={s.person.figure_tone} size={s.size} />
+          </g>
+        ))}
     </g>
   );
 }
+
+/** Re-rendered by data, axis, lanes or selection changes, not by each committed viewport. */
+export default memoIgnoringCommitted(FigureLayer);

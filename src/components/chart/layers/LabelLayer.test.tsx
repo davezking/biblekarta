@@ -74,11 +74,22 @@ async function mount(width: number): Promise<Mounted> {
 
 const cfg = () => data.index.timescale!;
 const seg = (id: string) => data.tile.axes.scholarly.reigns.find((r) => r.reign_id === id)!;
+/** The x of an element's translate() (0 with none). */
+const tx = (el: Element | null) =>
+  Number(/translate\(([-\d.]+),/.exec(el?.getAttribute('transform') ?? '')?.[1] ?? 0);
+/**
+ * A reign label's screen x: its group is moved with a transform (its texts sit at x = 0), inside
+ * the labels' group, which pan frames shift as a whole.
+ */
+const labelX = (g: Element) =>
+  g.hasAttribute('transform') ? tx(g) + tx(g.closest('g.reign-labels')) : NaN;
 const label = (svg: SVGSVGElement, id: string) =>
   svg.querySelector<SVGGElement>(`g.reign-label[data-label="${id}"]`);
 const shownLabel = (svg: SVGSVGElement, id: string) => {
   const g = label(svg, id);
-  return g && g.getAttribute('visibility') !== 'hidden' ? g : null;
+  return g && g.getAttribute('visibility') !== 'hidden' && g.getAttribute('display') !== 'none'
+    ? g
+    : null;
 };
 const tooltip = (svg: SVGSVGElement) => svg.querySelector('g.chart-tooltip')!;
 const tooltipShown = (svg: SVGSVGElement) => tooltip(svg).getAttribute('visibility') !== 'hidden';
@@ -125,7 +136,7 @@ describe('LabelLayer', () => {
     expect(ahab.getAttribute('data-mode')).toBe('full');
     expect(ahab.querySelector('.reign-name')!.textContent).toBe('አክዓብ');
     expect(ahab.querySelector('.reign-years')!.textContent).toBe('874–853 ዓ.ዓ.');
-    const x = Number(ahab.querySelector('text')!.getAttribute('x'));
+    const x = labelX(ahab);
     const v = m.controller.getView();
     expect(x).toBeGreaterThan(v.k * seg('ahab').x0 + v.x);
     expect(x).toBeLessThan(v.k * seg('ahab').x1 + v.x);
@@ -167,9 +178,11 @@ describe('LabelLayer', () => {
       // Labels in the same stream row never overlap (centred, estimated widths in happy-dom).
       const byGroup = new Map<string, [number, number][]>();
       for (const g of m.svg.querySelectorAll('g.reign-label')) {
-        if (g.getAttribute('visibility') === 'hidden') continue;
+        // Hidden, or culled far off screen (display: none): not on screen.
+        if (g.getAttribute('visibility') === 'hidden' || g.getAttribute('display') === 'none')
+          continue;
         const r = seg(g.getAttribute('data-label')!);
-        const x = Number(g.querySelector('text')!.getAttribute('x'));
+        const x = labelX(g);
         const w = [...g.querySelectorAll('text')].reduce(
           (a, t) =>
             Math.max(
@@ -330,7 +343,7 @@ describe('LabelLayer', () => {
   it('re-places labels imperatively during a gesture, with one commit at its end', async () => {
     const m = await mount(1200);
     focus(m, 'ahab', 2, 1200);
-    const x = () => Number(label(m.svg, 'ahab')!.querySelector('text')!.getAttribute('x'));
+    const x = () => labelX(label(m.svg, 'ahab')!);
     const x0 = x();
     const before = m.commits.count;
     for (let i = 0; i < 10; i++) {

@@ -15,6 +15,8 @@
     "typecheck": "astro check && tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
+    "perf": "playwright test --config e2e/perf/playwright.config.ts",
+    "stress-seed": "node scripts/stress-seed.mjs",
     "validate": "tsx src/build/validate-content.ts",
     "compile:data": "tsx src/build/compile-data.ts",
     "seed:check": "pnpm validate --dir seed",

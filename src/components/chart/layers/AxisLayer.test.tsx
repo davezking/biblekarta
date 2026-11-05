@@ -11,7 +11,14 @@ import { seedChartData } from '../seed-data.testutil';
 import { createChartStore, type ChartStore } from '../state';
 import { WHEEL_END_MS, type ChartController } from '../zoom';
 import { AXIS_BAND_PX } from '../geometry';
-import { axisLabels, captionText, LABEL_FONT_PX, LABEL_PAD_PX, placeRow } from './AxisLayer';
+import {
+  axisLabels,
+  captionText,
+  LABEL_FONT_PX,
+  LABEL_PAD_PX,
+  placeRow,
+  resetAxisMeasure,
+} from './AxisLayer';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -24,6 +31,7 @@ beforeAll(async () => {
   data = await seedChartData();
 });
 beforeEach(() => {
+  resetAxisMeasure();
   vi.useFakeTimers();
   // happy-dom shims, as in zoom.test.ts: no SVG point maths, no clientLeft/Top on SVG.
   Object.defineProperty(SVGSVGElement.prototype, 'createSVGPoint', {
@@ -89,13 +97,14 @@ function wheel(svg: SVGSVGElement, init: WheelEventInit) {
   svg.dispatchEvent(e);
 }
 
-/** The prototype that owns getComputedTextLength (happy-dom has no SVGTextContentElement global). */
-function textProto(): SVGTextContentElement {
-  let p: object | null = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  while (p && !Object.prototype.hasOwnProperty.call(p, 'getComputedTextLength')) {
-    p = Object.getPrototypeOf(p) as object | null;
-  }
-  return p as SVGTextContentElement;
+/** Makes canvas text measurement return `width()` (AxisLayer measures with a 2D canvas). */
+function mockCanvas(width: () => number) {
+  const measureText = vi.fn((text: string) => ({ width: text ? width() : 0 }));
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+    font: '',
+    measureText,
+  } as unknown as CanvasRenderingContext2D);
+  return measureText;
 }
 
 /** Lets the viewport channel's animation frame run. */
@@ -196,7 +205,7 @@ describe('AxisLayer', () => {
   it('measures labels again when web fonts finish loading', async () => {
     // Before the font loads, the fallback draws every label wide; afterwards they are narrow.
     let width = 200;
-    vi.spyOn(textProto(), 'getComputedTextLength').mockImplementation(() => width);
+    mockCanvas(() => width);
     const fonts = Object.assign(new EventTarget(), { ready: new Promise<void>(() => {}) });
     Object.defineProperty(document, 'fonts', { value: fonts, configurable: true });
     try {
@@ -210,9 +219,10 @@ describe('AxisLayer', () => {
     }
   });
 
-  it('measures the caption once per text, not on every gesture frame', async () => {
+  it('measures each text once, not on every gesture frame', async () => {
+    const spy = mockCanvas(() => 20);
     const m = await mount(1200);
-    const spy = vi.spyOn(textProto(), 'getComputedTextLength').mockReturnValue(20);
+    expect(spy).toHaveBeenCalled();
     act(() => {
       m.controller.setView({ x: -2000, k: 3 });
       vi.advanceTimersByTime(20);
