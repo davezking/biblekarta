@@ -191,6 +191,34 @@ describe('compileData', () => {
   });
 });
 
+describe('index.books', () => {
+  it('names every cited book (from books-meta.json) and no others', async () => {
+    const outDir = await mkdtemp(join(tmpdir(), 'bk-books-'));
+    const { index } = await compileData({
+      contentDir: 'content',
+      seedDir: 'seed',
+      outDir,
+      env: { BK_SEED: '1' },
+      logger: quiet,
+      buildId: 'test',
+      scriptureBooks: [],
+      lockFile: join(FIX, 'missing.lock'),
+      scriptureDir: 'scripture-fixtures',
+    });
+    const meta = JSON.parse(await readFile('scripture-fixtures/books-meta.json', 'utf8')) as {
+      id: string;
+      name_am: string;
+    }[];
+    expect(index.books!['1ki']).toEqual({
+      id: '1ki',
+      name_am: meta.find((b) => b.id === '1ki')!.name_am,
+    });
+    // Only the books the compiled data cites: the seed's people and events cite 1 Kings only
+    // (its one 2 Kings ref is on a relationship, which the chart data doesn't carry).
+    expect(Object.keys(index.books!)).toEqual(['1ki']);
+  });
+});
+
 describe('budgets', () => {
   it('is ok under 80%, warns from 80%, fails above 100%', () => {
     const json = JSON.stringify({ a: 'x'.repeat(50) });

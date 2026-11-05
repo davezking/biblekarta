@@ -4,16 +4,19 @@
 //   dated), "እንዴት ታወቀ?", their refs, and the editor note.
 // - An event: title (the panel title) with the English title small, summary, date block,
 //   "እንዴት ታወቀ?", refs and the editor note.
-// Every date block shows both axes (DateRow). The refs are a placeholder list that P2-S4-T2
-// replaces with the verse block. Scripture is never rendered here.
+// Every date block shows both axes (DateRow). The refs open their verses inline (RefList,
+// VerseBlock); the editors' note is a separate red-ink box, never inside a verse block.
 import type { IndexFile, TileFile } from '../../lib/core/datafiles';
-import type { Anchor, Event, Person, Reign, ScriptureRef, Source } from '../../lib/core/schema';
+import { useMemo } from 'react';
+import type { Anchor, Event, Person, Reign, Source } from '../../lib/core/schema';
 import type { T } from '../../lib/i18n';
 import Figure from '../figures/Figure';
 import type { Selection } from '../chart/state';
 import { AXES, DateBlock, type DatePair } from './DateRow';
-import HowKnown, { refText, type BookLookup, type KnownDate } from './HowKnown';
+import HowKnown, { type BookLookup, type KnownDate } from './HowKnown';
+import RefList from './RefList';
 import './detail.css';
+import './verses.css';
 
 export type DetailItem =
   | { kind: 'person'; person: Person; reigns: Reign[]; selectedReignId?: string }
@@ -103,44 +106,28 @@ function knownDates(blocks: Block[]): KnownDate[] {
 export interface DetailPanelProps {
   item: DetailItem;
   tile: Pick<TileFile, 'anchors' | 'sources'>;
-  index: Pick<IndexFile, 'anchors' | 'streams'>;
+  /** `books` names the refs; `scriptureBooks` / `scriptureVersion` drive the verse block. */
+  index: Pick<IndexFile, 'anchors' | 'streams' | 'books' | 'scriptureBooks' | 'scriptureVersion'>;
   t: T;
-  /** Book names for the refs, when loaded (P2-S4-T2). */
-  books?: BookLookup;
 }
 
-/** The placeholder refs list (P2-S4-T2 replaces it with the verse block). */
-function RefList({ refs, books, t }: { refs: ScriptureRef[]; books?: BookLookup; t: T }) {
-  if (refs.length === 0) return null;
-  return (
-    <section className="detail-refs">
-      <h3 className="detail-section-label">{t('panel.refs')}</h3>
-      <ul className="detail-refs-list" lang="am">
-        {refs.map((r) => {
-          const key = `${r.book_id}.${r.chapter}.${r.verse_start}${r.verse_end ? `-${r.verse_end}` : ''}`;
-          return (
-            <li key={key} data-ref={key}>
-              {refText(r, books)}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
-/** The editor note slot (FR-18): team-written, never scripture. */
+/** The editors' note (FR-18): team-written, never scripture; its own red-ink box, labelled. */
 function EditorNote({ note, t }: { note?: string; t: T }) {
   if (!note) return null;
   return (
-    <section className="detail-note">
-      <h3 className="detail-section-label">{t('verse.editor_note')}</h3>
+    <aside className="note">
+      <h3 className="note-label">{t('verse.editor_note')}</h3>
       <p lang="am">{note}</p>
-    </section>
+    </aside>
   );
 }
 
-export default function DetailPanel({ item, tile, index, t, books }: DetailPanelProps) {
+export default function DetailPanel({ item, tile, index, t }: DetailPanelProps) {
+  const books: BookLookup = new Map(Object.entries(index.books ?? {}));
+  const scripture = useMemo(
+    () => ({ scriptureBooks: index.scriptureBooks, scriptureVersion: index.scriptureVersion }),
+    [index.scriptureBooks, index.scriptureVersion],
+  );
   const anchors = new Map<string, Anchor>(
     [...index.anchors, ...tile.anchors].map((a) => [a.id, a]),
   );
@@ -193,7 +180,8 @@ export default function DetailPanel({ item, tile, index, t, books }: DetailPanel
       />
       <RefList
         refs={item.kind === 'person' ? item.person.refs : item.event.refs}
-        books={books}
+        books={index.books}
+        scripture={scripture}
         t={t}
       />
       <EditorNote note={item.kind === 'person' ? item.person.note_am : item.event.note_am} t={t} />
