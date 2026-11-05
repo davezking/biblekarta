@@ -1,0 +1,11 @@
+{
+  "id": "judges",
+  "slug": "judges",
+  "name_am": "መሳፍንት",
+  "name_en": "Judges",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 4,
+  "canon": "shared",
+  "fixture": true
+}

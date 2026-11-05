@@ -37,7 +37,8 @@ const soon = (id: string, order: number, weight = 1): IndexEra => ({
 
 beforeAll(async () => {
   seed = await seedChartData();
-  const live = seed.index.eras.map((e) => ({ ...e, order: 10 }));
+  // The seed's live era only: its coming-soon eras are replaced by this test's placeholders.
+  const live = seed.index.eras.filter((e) => e.status === 'live').map((e) => ({ ...e, order: 10 }));
   // Out of order on purpose: the minimap sorts by `order`.
   data = {
     ...seed,

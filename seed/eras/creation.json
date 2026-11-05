@@ -1,0 +1,11 @@
+{
+  "id": "creation",
+  "slug": "creation",
+  "name_am": "ፍጥረት",
+  "name_en": "Creation",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 1,
+  "canon": "shared",
+  "fixture": true
+}

@@ -29,7 +29,8 @@ beforeAll(async () => {
   const seed = await seedChartData();
   const cfg = seed.index.timescale!;
   const eras: IndexEra[] = CUTS.map(([slug, s, e], i) => ({
-    ...seed.index.eras[0]!,
+    // The seed's live era (its other eras are coming soon, with no dates or tile).
+    ...seed.index.eras.find((era) => era.status === 'live')!,
     id: slug,
     slug,
     order: i + 1,

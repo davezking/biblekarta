@@ -1,0 +1,11 @@
+{
+  "id": "intertestamental",
+  "slug": "intertestamental",
+  "name_am": "በኪዳናት መካከል",
+  "name_en": "Intertestamental",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 7,
+  "canon": "shared",
+  "fixture": true
+}

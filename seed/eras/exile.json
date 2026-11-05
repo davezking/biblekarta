@@ -1,0 +1,11 @@
+{
+  "id": "exile",
+  "slug": "exile",
+  "name_am": "ምርኮ",
+  "name_en": "Exile",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 6,
+  "canon": "shared",
+  "fixture": true
+}

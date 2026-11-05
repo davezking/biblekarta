@@ -1,4 +1,6 @@
+import { join as pathJoin } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import type { Era } from '../lib/core/schema';
 import { formatText, validateContent } from './validate-content';
 
 const F = 'src/build/__fixtures__/validate';
@@ -170,5 +172,40 @@ describe('seed/', () => {
       // YearPairs (stream forks/ends, era bounds, width keyframes) carry scholarly years only.
       expect(JSON.stringify(data), file).not.toMatch(/"traditional":/);
     }
+  });
+
+  it('coming-soon eras have no dates, and era orders are unique and contiguous from 1', async () => {
+    const eras = (await seedFiles())
+      .filter(({ file }) => file.startsWith(pathJoin('seed', 'eras')))
+      .map(({ file, data }) => ({ file, ...(data as Era) }));
+    expect(eras.length).toBeGreaterThan(1);
+    for (const e of eras.filter((x) => x.status === 'coming_soon')) {
+      expect(e.start, e.file).toBeUndefined();
+      expect(e.end, e.file).toBeUndefined();
+    }
+    const orders = eras.map((e) => e.order).sort((a, b) => a - b);
+    expect(orders).toEqual(orders.map((_, i) => i + 1));
+  });
+
+  it('has the Board 5 minimap eras in order, with the live Divided Kingdom fifth', async () => {
+    const eras = (await seedFiles())
+      .filter(({ file }) => file.startsWith(pathJoin('seed', 'eras')))
+      .map(({ data }) => data as Era)
+      .sort((a, b) => a.order - b.order);
+    // Transcribed from design-reference/board5-desktop.html (the minimap labels).
+    expect(eras.map((e) => e.name_am)).toEqual([
+      'ፍጥረት',
+      'አባቶች',
+      'ዘፀአት',
+      'መሳፍንት',
+      'የነገሥታት ዘመን',
+      'ምርኮ',
+      'በኪዳናት መካከል',
+      'ወንጌላት',
+      'ሐዋርያት',
+    ]);
+    expect(eras.filter((e) => e.status === 'live').map((e) => [e.id, e.order])).toEqual([
+      ['divided-kingdom', 5],
+    ]);
   });
 });

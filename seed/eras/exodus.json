@@ -1,0 +1,11 @@
+{
+  "id": "exodus",
+  "slug": "exodus",
+  "name_am": "ዘፀአት",
+  "name_en": "Exodus",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 3,
+  "canon": "shared",
+  "fixture": true
+}

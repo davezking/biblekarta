@@ -1,0 +1,11 @@
+{
+  "id": "apostles",
+  "slug": "apostles",
+  "name_am": "ሐዋርያት",
+  "name_en": "Apostles",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 9,
+  "canon": "shared",
+  "fixture": true
+}

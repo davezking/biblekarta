@@ -1,0 +1,11 @@
+{
+  "id": "gospels",
+  "slug": "gospels",
+  "name_am": "ወንጌላት",
+  "name_en": "Gospels",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 8,
+  "canon": "shared",
+  "fixture": true
+}

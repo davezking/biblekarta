@@ -1,0 +1,11 @@
+{
+  "id": "patriarchs",
+  "slug": "patriarchs",
+  "name_am": "አባቶች",
+  "name_en": "Patriarchs",
+  "certainty": "approximate",
+  "status": "coming_soon",
+  "order": 2,
+  "canon": "shared",
+  "fixture": true
+}
