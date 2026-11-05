@@ -56,6 +56,7 @@ async function row(props: Parameters<typeof DateRow>[0]) {
     axis: el.querySelector('dt')!.textContent,
     text: el.querySelector('.date-row-text')!.textContent!,
     chip: el.querySelector('.ui-chip'),
+    chipContext: el.querySelector('.visually-hidden')?.textContent ?? null,
     stale: el.querySelector('.date-row-stale'),
   };
 }
@@ -116,6 +117,8 @@ describe('DateRow', () => {
           expect(r.el.getAttribute('data-axis')).toBe(axis);
           expect(r.axis).toBe(am(`axis.${axis}.name`));
           expect(r.chip!.textContent).toBe(am(`certainty.${certainty}`));
+          // Screen readers hear "እርግጠኝነት ትክክለኛ", not a bare "ትክክለኛ".
+          expect(r.chipContext).toBe(am('certainty.label'));
           if (method === 'relative') {
             expect(r.text).toBe('ከሰሎሞን በኋላ');
             expect(r.text).not.toMatch(/\d/);
@@ -136,6 +139,7 @@ describe('DateRow', () => {
     const r = await row({ axis: 'traditional', anchors, t: am });
     expect(r.text).toBe('ያልተወሰነ');
     expect(r.chip).toBeNull();
+    expect(r.chipContext).toBeNull();
   });
 
   it('flags a stale derived date (its anchor moved, or is missing) in red ink', async () => {

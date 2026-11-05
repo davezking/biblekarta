@@ -24,6 +24,13 @@ export default function PanelSlot({ selection, tile, index, store, t }: PanelSlo
   const open = item !== null;
   const slotRef = useRef<HTMLDivElement>(null);
   const wasOpen = useRef(open);
+  const itemKey = selection ? `${selection.kind}:${selection.id}` : '';
+
+  // A new selection in an open panel starts at the top of the panel's body.
+  useLayoutEffect(() => {
+    const body = slotRef.current?.querySelector('.panel-body');
+    if (body) body.scrollTop = 0;
+  }, [itemKey]);
 
   const chartOf = () => slotRef.current?.closest('.chart') ?? null;
 
@@ -75,7 +82,8 @@ export default function PanelSlot({ selection, tile, index, store, t }: PanelSlo
         lang="am"
         t={t}
       >
-        {item && <DetailPanel item={item} tile={tile} index={index} t={t} />}
+        {/* Keyed by item: a new selection starts with "እንዴት ታወቀ?" closed. */}
+        {item && <DetailPanel key={itemKey} item={item} tile={tile} index={index} t={t} />}
       </Panel>
     </div>
   );

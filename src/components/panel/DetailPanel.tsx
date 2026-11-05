@@ -57,19 +57,26 @@ const eventDates = (e: Event): DatePair => ({
 });
 const hasAny = (d: DatePair) => Object.values(d).some((v) => v !== undefined);
 
-interface Block {
+export interface Block {
   key: string;
   label?: string;
   dates: DatePair;
+  /** The reign that was tapped (listed first). */
+  selected?: boolean;
 }
 
 /** The date blocks of an item: always at least one, so both axis rows always show. */
 export function dateBlocks(item: DetailItem, streamName: (id: string) => string, t: T): Block[] {
   if (item.kind === 'event') return [{ key: 'event', dates: eventDates(item.event) }];
-  const blocks: Block[] = item.reigns.map((r) => ({
+  // The tapped reign first, then the others in their order.
+  const reigns = [...item.reigns].sort(
+    (a, b) => Number(b.id === item.selectedReignId) - Number(a.id === item.selectedReignId),
+  );
+  const blocks: Block[] = reigns.map((r) => ({
     key: `reign:${r.id}`,
     label: t('panel.reign', { stream: streamName(r.stream_id) }),
     dates: r,
+    selected: r.id === item.selectedReignId && reigns.length > 1,
   }));
   const life = lifeDates(item.person);
   if (hasAny(life) || blocks.length === 0) {
@@ -168,7 +175,14 @@ export default function DetailPanel({ item, tile, index, t, books }: DetailPanel
         </div>
       )}
       {blocks.map((b) => (
-        <DateBlock key={b.key} dates={b.dates} anchors={anchors} t={t} label={b.label} />
+        <DateBlock
+          key={b.key}
+          dates={b.dates}
+          anchors={anchors}
+          t={t}
+          label={b.label}
+          selected={b.selected}
+        />
       ))}
       <HowKnown
         dates={knownDates(blocks)}

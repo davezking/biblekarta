@@ -81,6 +81,10 @@ export default function DateRow({ axis, start, end, anchors, t }: DateRowProps) 
       <dd className="date-row-value">
         <span className="date-row-text">{dateText(axis, t, start, end)}</span>
         {certainty && (
+          // Read as "<certainty>: <value>"; the chip alone has no context for a screen reader.
+          <span className="visually-hidden">{t('certainty.label')}</span>
+        )}
+        {certainty && (
           <Chip tone={CERTAINTY_TONE[certainty]} title={t('certainty.label')}>
             {t(`certainty.${certainty}`)}
           </Chip>
@@ -105,12 +109,14 @@ export interface DateBlockProps {
   t: T;
   /** A heading for the block (e.g. the reign), when an item has more than one. */
   label?: string;
+  /** The block of the reign that was tapped. */
+  selected?: boolean;
 }
 
 /** Both axes' rows, always both. */
-export function DateBlock({ dates, anchors, t, label }: DateBlockProps) {
+export function DateBlock({ dates, anchors, t, label, selected }: DateBlockProps) {
   return (
-    <div className="date-block">
+    <div className="date-block" data-selected={selected || undefined}>
       {label && <h3 className="date-block-label">{label}</h3>}
       <dl className="date-block-rows">
         {AXES.map((axis) => (

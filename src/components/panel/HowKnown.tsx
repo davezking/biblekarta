@@ -41,6 +41,10 @@ export function refText(ref: ScriptureRef, books?: BookLookup): string {
   return `${ref.book_id} ${toGeez(ref.chapter)}፥${toGeez(ref.verse_start)}${end}`;
 }
 
+/** The anchor's label in the UI's language (`meta.lang`); Amharic unless the UI is English. */
+export const anchorLabel = (anchor: { label_am: string; label_en: string }, t: T) =>
+  t('meta.lang') === 'en' ? anchor.label_en : anchor.label_am;
+
 /** The sentence explaining how one date is known. */
 export function explainDate(
   dv: DateValue,
@@ -55,7 +59,9 @@ export function explainDate(
   switch (dv.method) {
     case 'anchor':
       if (anchor)
-        parts.push(t('how.anchor', { label: anchor.label_am, source: anchor.external_source }));
+        parts.push(
+          t('how.anchor', { label: anchorLabel(anchor, t), source: anchor.external_source }),
+        );
       else if (source) parts.push(t('how.source', { citation: source.citation }));
       else parts.push(t('how.missing'));
       break;
@@ -66,7 +72,11 @@ export function explainDate(
           t,
         );
         parts.push(
-          t('how.derived', { label: anchor.label_am, value, source: anchor.external_source }),
+          t('how.derived', {
+            label: anchorLabel(anchor, t),
+            value,
+            source: anchor.external_source,
+          }),
         );
       } else parts.push(t('how.missing'));
       if (dv.derivation_refs?.length) {

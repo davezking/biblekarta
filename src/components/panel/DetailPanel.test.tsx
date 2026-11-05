@@ -9,7 +9,7 @@ import type { ChartData } from '../chart/data/useChartData';
 import { seedChartData } from '../chart/seed-data.testutil';
 import { createChartStore } from '../chart/state';
 import { cleanup, click, key, render } from '../ui/ui.testutil';
-import DetailPanel, { resolveSelection, type DetailItem } from './DetailPanel';
+import DetailPanel, { dateBlocks, resolveSelection, type DetailItem } from './DetailPanel';
 
 const am = createT('am');
 let data: ChartData;
@@ -143,21 +143,68 @@ describe('every seed person and event', () => {
       for (const block of blocks) {
         expect(rows(block).map((r) => r.axis)).toEqual(['scholarly', 'traditional']);
       }
-      // Where every value behind a row is relative, the row shows no digits (no year).
-      const pairs =
-        item.kind === 'event'
-          ? [[item.event.date_scholarly], [item.event.date_traditional]]
-          : item.reigns.flatMap((r) => [
-              [r.start_scholarly, r.end_scholarly],
-              [r.start_traditional, r.end_traditional],
-            ]);
-      const shown = blocks.flatMap((b) => rows(b));
-      pairs.forEach((dvs, i) => {
-        if (isRelativeOnly(dvs))
-          expect(shown[i]!.text, `${JSON.stringify(dvs)}`).not.toMatch(/[0-9]/);
+      // Where every value behind a row is relative, the row shows no digits (no year). The
+      // blocks come from dateBlocks, so reigns and lifetimes are both covered.
+      const expected = dateBlocks(item, (id) => id, am);
+      expect(blocks).toHaveLength(expected.length);
+      expected.forEach((b, i) => {
+        const shown = rows(blocks[i]!);
+        (['scholarly', 'traditional'] as const).forEach((axis, j) => {
+          const dvs = [b.dates[`start_${axis}`], b.dates[`end_${axis}`]];
+          if (isRelativeOnly(dvs)) {
+            expect(shown[j]!.text, JSON.stringify(dvs)).not.toMatch(/[0-9]/);
+          }
+        });
       });
       cleanup();
     }
+  });
+});
+
+describe('review fixes', () => {
+  it('a new selection in an open panel starts with "እንዴት ታወቀ?" closed', async () => {
+    const { store } = await mountChart(true);
+    await act(async () => store.select({ kind: 'reign', id: 'ahab' }));
+    const how = () => dialog()!.querySelector<HTMLButtonElement>('.how-known button')!;
+    await click(how());
+    expect(how().getAttribute('aria-expanded')).toBe('true');
+    await act(async () => store.select({ kind: 'event', id: 'battle-of-qarqar' }));
+    expect(dialog()!.querySelector('.detail-name-en')!.textContent).toBe('Battle of Qarqar');
+    expect(how().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('a new selection scrolls the panel body back to the top', async () => {
+    const { store } = await mountChart(true);
+    await act(async () => store.select({ kind: 'reign', id: 'ahab' }));
+    const body = dialog()!.querySelector<HTMLElement>('.panel-body')!;
+    body.scrollTop = 120;
+    await act(async () => store.select({ kind: 'event', id: 'battle-of-qarqar' }));
+    expect(body.scrollTop).toBe(0);
+  });
+
+  it('lists the tapped reign first and marks it, when a person has several', async () => {
+    const ahab = resolveSelection({ kind: 'person', id: 'ahab' }, data.tile)!;
+    if (ahab.kind !== 'person') throw new Error('expected a person');
+    const first = ahab.reigns[0]!;
+    const second = { ...first, id: 'ahab-second', stream_id: 'judah' };
+    const item: DetailItem = { ...ahab, reigns: [first, second], selectedReignId: 'ahab-second' };
+    const blocks = dateBlocks(item, (id) => id, am);
+    expect(blocks.map((b) => [b.key, !!b.selected])).toEqual([
+      ['reign:ahab-second', true],
+      ['reign:ahab', false],
+    ]);
+    const { container } = await render(
+      <DetailPanel item={item} tile={data.tile} index={data.index} t={am} />,
+    );
+    const shown = [...container.querySelectorAll('.date-block')];
+    expect(shown.map((b) => b.hasAttribute('data-selected'))).toEqual([true, false]);
+    expect(shown[0]!.querySelector('.date-block-label')!.textContent).toBe(
+      am('panel.reign', { stream: data.index.streams.find((st) => st.id === 'judah')!.name_am }),
+    );
+    // With one reign there is nothing to tell apart: no marker.
+    expect(dateBlocks({ ...ahab, selectedReignId: 'ahab' }, (id) => id, am)[0]!.selected).toBe(
+      false,
+    );
   });
 });
 

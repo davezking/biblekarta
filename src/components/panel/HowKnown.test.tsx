@@ -59,7 +59,7 @@ describe('explainDate: one sentence per method', () => {
     expect(s).toContain('1ki ፲፮፥፳፱');
     expect(s).toContain('Thiele, Mysterious Numbers');
     expect(explain(dv, en)).toBe(
-      'Calculated from the ቃርቃር ጦርነት (853 BC); the ቃርቃር ጦርነት is attested by the Kurkh Monolith. Worked out from 1ki ፲፮፥፳፱. Calculation: Thiele, Mysterious Numbers.',
+      'Calculated from the Battle of Qarqar (853 BC); the Battle of Qarqar is attested by the Kurkh Monolith. Worked out from 1ki ፲፮፥፳፱. Calculation: Thiele, Mysterious Numbers.',
     );
   });
 
