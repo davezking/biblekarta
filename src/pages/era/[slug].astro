@@ -1,0 +1,15 @@
+---
+// /era/<slug>/: a static era page (FR-10), built from the compiled data (item-pages.ts).
+// No live era means no pages: getStaticPaths returns none.
+import ItemPage from '../../components/item/ItemPage.astro';
+import { itemPaths, type ItemPage as Page } from '../../build/item-pages';
+
+export const getStaticPaths = () => itemPaths('era');
+
+interface Props {
+  page: Page;
+}
+const { page } = Astro.props;
+---
+
+<ItemPage page={page} />

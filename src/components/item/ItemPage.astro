@@ -1,0 +1,162 @@
+---
+// One item page (person, event or era): the server-rendered summary, readable without JavaScript
+// (name, both dates with certainty, the refs as text, and an era's people and events), the meta
+// tags, and the chart island opened on the item. No verse text is ever rendered here: verses load
+// only in the panel (architecture §5).
+import Base from '../../layouts/Base.astro';
+import TitleCartouche from '../ornament/TitleCartouche';
+import ItemChart from './ItemChart';
+import type { ItemPage } from '../../build/item-pages';
+import { createT } from '../../lib/i18n';
+
+interface Props {
+  page: ItemPage;
+}
+const { page } = Astro.props;
+const t = createT('am');
+---
+
+<Base title={page.title}>
+  <Fragment slot="head">
+    <meta name="description" content={page.description} />
+    <link rel="canonical" href={page.canonical} />
+    <meta property="og:title" content={page.title} />
+    <meta property="og:description" content={page.description} />
+    <meta property="og:url" content={page.canonical} />
+    <meta property="og:type" content={page.kind === 'era' ? 'website' : 'article'} />
+    <meta property="og:site_name" content={t('page.site')} />
+    <meta property="og:locale" content="am_ET" />
+  </Fragment>
+  <main class="item-main">
+    <TitleCartouche title={t('page.site')} />
+    <ItemChart client:load search={page.search} lang="am" />
+    <article class="item-summary" data-kind={page.kind}>
+      <p class="item-kind">{t(`page.kind.${page.kind}`)}</p>
+      <h2 class="item-name" lang="am">
+        {page.name_am}
+      </h2>
+      <p class="item-name-en" lang="en">
+        {page.name_en}
+      </p>
+      {page.dates.map((block) => (
+        <section class="item-dates">
+          {block.label && (
+            <h3 class="item-section" lang="am">
+              {block.label}
+            </h3>
+          )}
+          <dl>
+            {block.rows.map((row) => (
+              <div class="item-date" data-axis={row.axis}>
+                <dt>{row.label}</dt>
+                <dd lang="am">
+                  {row.text}
+                  {row.certainty && <span class="item-certainty"> · {row.certainty}</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
+      {page.refs.length > 0 && (
+        <section class="item-refs">
+          <h3 class="item-section">{t('panel.refs')}</h3>
+          <ul lang="am">
+            {page.refs.map((r) => (
+              <li>{r}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {page.people && page.people.length > 0 && (
+        <section class="item-members">
+          <h3 class="item-section">{t('page.people')}</h3>
+          <ul lang="am">
+            {page.people.map((l) => (
+              <li>
+                <a href={l.href}>{l.name_am}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {page.events && page.events.length > 0 && (
+        <section class="item-members">
+          <h3 class="item-section">{t('page.events')}</h3>
+          <ul lang="am">
+            {page.events.map((l) => (
+              <li>
+                <a href={l.href}>{l.name_am}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <p class="item-home">
+        <a href="/">{t('page.home')}</a>
+      </p>
+    </article>
+  </main>
+</Base>
+
+<style>
+  .item-main {
+    padding: var(--space-lg);
+  }
+  .item-summary {
+    max-width: 40rem;
+    margin: var(--space-xl) auto 0;
+    font-family: var(--font-manuscript);
+    color: var(--ink);
+  }
+  .item-kind,
+  .item-name-en,
+  .item-date dt {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+    color: var(--ink-brown);
+  }
+  .item-name {
+    margin: var(--space-xs) 0;
+    font-size: var(--font-size-lg);
+    font-weight: 400;
+    color: var(--ink-red);
+  }
+  .item-section {
+    margin: var(--space-lg) 0 var(--space-xs);
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    color: var(--ink-red);
+  }
+  .item-dates dl {
+    margin: var(--space-sm) 0 0;
+  }
+  .item-date {
+    margin-block-end: var(--space-sm);
+  }
+  .item-date dd {
+    margin: 0;
+    font-size: var(--font-size-md);
+  }
+  .item-certainty {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-xs);
+  }
+  ul {
+    margin: 0;
+    padding-inline-start: var(--space-lg);
+  }
+  li {
+    min-height: var(--touch-target);
+    display: list-item;
+    line-height: var(--touch-target);
+  }
+  a {
+    color: var(--ink-red);
+  }
+  .item-home {
+    margin-block-start: var(--space-xl);
+    line-height: var(--touch-target);
+  }
+</style>
