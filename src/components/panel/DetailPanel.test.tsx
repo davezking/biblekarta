@@ -208,6 +208,32 @@ describe('review fixes', () => {
   });
 });
 
+describe('refs and the editors’ note (P2-S4-T2)', () => {
+  it('names refs with the Amharic book name and keeps the note in its own labelled box', async () => {
+    const ahab = resolveSelection({ kind: 'person', id: 'ahab' }, data.tile)!;
+    if (ahab.kind !== 'person') throw new Error('expected a person');
+    const note = 'የአዘጋጆቹ የሙከራ ማስታወሻ';
+    const item: DetailItem = { ...ahab, person: { ...ahab.person, note_am: note } };
+    const { container } = await render(
+      <DetailPanel item={item} tile={data.tile} index={data.index} t={am} />,
+    );
+    const button = container.querySelector<HTMLButtonElement>('button.ref-button')!;
+    const name = data.index.books!['1ki']!;
+    expect(button.textContent).toBe(`${name.abbr_am || name.name_am} ፲፮፥፳፱`);
+
+    // 1 Kings isn't published in tests: the block says so, and the note stays outside it.
+    await click(button);
+    const block = container.querySelector('.verse-block')!;
+    expect(block.textContent).toContain('ይህ መጽሐፍ በዝግጅት ላይ ነው');
+    const box = container.querySelector('aside.note')!;
+    expect(box.querySelector('.note-label')!.textContent).toBe(am('verse.editor_note'));
+    expect(box.querySelector('p')!.textContent).toBe(note);
+    expect(block.contains(box)).toBe(false);
+    expect(box.contains(block)).toBe(false);
+    expect(block.textContent).not.toContain(note);
+  });
+});
+
 describe('resolveSelection', () => {
   it('resolves a reign to its person, and an unknown id to null', () => {
     const item = resolveSelection({ kind: 'reign', id: 'ahab' }, data.tile)!;

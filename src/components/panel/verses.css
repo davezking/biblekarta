@@ -1,0 +1,107 @@
+/* Verse block, reference list and editor note (P2-S4-T2). Tokens only. Verse text is never bold;
+   emphasis is red ink (DR-3). */
+
+.ref-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ref-button {
+  font-family: var(--font-manuscript);
+  font-size: var(--font-size-sm);
+}
+
+.verse-block {
+  margin-block-start: var(--space-sm);
+  padding: var(--space-md);
+  border: var(--line-hairline) solid var(--vellum-edge);
+  border-radius: var(--radius-md);
+  background: var(--vellum-highlight);
+}
+
+.verse-ref {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-manuscript);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--ink-red);
+}
+
+.verse-text .verse {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-manuscript);
+  font-size: var(--font-size-md);
+  line-height: 1.7;
+}
+
+.verse-text .verse-n {
+  margin-inline-end: var(--space-xs);
+  color: var(--ink-red);
+}
+
+.verse-status {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+}
+
+.verse-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.verse-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-block-end: var(--space-sm);
+}
+
+.verse-skeleton span {
+  display: block;
+  height: var(--space-md);
+  border-radius: var(--radius-sm);
+  background: var(--vellum-shade);
+}
+
+.verse-skeleton span:nth-child(2) {
+  width: 85%;
+}
+
+.verse-skeleton span:nth-child(3) {
+  width: 60%;
+}
+
+.verse-credit {
+  margin: var(--space-sm) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xs);
+  color: var(--ink-brown);
+}
+
+/* The editors' note (FR-18): its own red-ink box, never inside a verse block. */
+.note {
+  padding: var(--space-md);
+  border: var(--line-outline) solid var(--ink-red);
+  border-radius: var(--radius-md);
+  color: var(--ink-red);
+}
+
+.note-label {
+  margin: 0 0 var(--space-xs);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+}
+
+.note p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}

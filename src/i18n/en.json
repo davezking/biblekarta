@@ -60,5 +60,9 @@
   "verse.editor_note": "Editors' note",
   "verse.credit": "[PLACEHOLDER] Translation credit — wording pending the Bible Society of Ethiopia's approval",
   "verse.footnotes": "Notes",
-  "meta.lang": "en"
+  "meta.lang": "en",
+  "verse.loading": "Loading the verses…",
+  "verse.error": "The verses could not be loaded",
+  "verse.retry": "Try again",
+  "verse.missing": "Not in this edition: {verses}"
 }

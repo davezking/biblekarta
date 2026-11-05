@@ -60,5 +60,9 @@
   "verse.editor_note": "የአዘጋጆቹ ማስታወሻ",
   "verse.credit": "[ጊዜያዊ] የትርጉሙ ምስጋና — ማኅበሩ የሚያጸድቀው ጽሑፍ ይጠበቃል",
   "verse.footnotes": "ማስታወሻ",
-  "meta.lang": "am"
+  "meta.lang": "am",
+  "verse.loading": "ጥቅሱ በመጫን ላይ ነው…",
+  "verse.error": "ጥቅሱን መጫን አልተቻለም",
+  "verse.retry": "እንደገና ሞክር",
+  "verse.missing": "በዚህ እትም ውስጥ የሌለ ቁጥር፦ {verses}"
 }

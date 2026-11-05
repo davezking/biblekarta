@@ -86,22 +86,6 @@
   line-height: 1.6;
 }
 
-.detail-refs-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  font-size: var(--font-size-sm);
-}
-
-.detail-note p {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
-}
-
 .date-block[data-selected] {
   padding-inline-start: var(--space-sm);
   border-inline-start: var(--line-strong) solid var(--ink-red);

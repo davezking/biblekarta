@@ -41,6 +41,13 @@ export type IndexStream = Pick<
   'id' | 'slug' | 'name_am' | 'name_en' | 'kind' | 'fill_color' | 'lane_order' | 'parent_stream_id'
 >;
 
+/** A book's display names (metadata from books-meta.json, never verse text), for formatRef. */
+export interface IndexBook {
+  id: string;
+  name_am: string;
+  abbr_am?: string;
+}
+
 export interface UnplacedCounts {
   streams: number;
   reigns: number;
@@ -56,6 +63,11 @@ export interface IndexFile {
   scriptureVersion: string;
   /** Ids of the verified books published to /data/scripture/. */
   scriptureBooks: string[];
+  /**
+   * Names of every book the content cites (refs, derivation refs), by id, so references show
+   * Amharic book names (FR-15). Optional: an index built before it existed has none.
+   */
+  books?: Record<string, IndexBook>;
   /** Null when no era is live (nothing to chart yet). */
   timescale: TimescaleConfig | null;
   /** Lane geometry per axis; lanes are global, the bands live in the tiles. */

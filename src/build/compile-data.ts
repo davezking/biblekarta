@@ -16,6 +16,7 @@ import {
   DATA_VERSION,
   INDEX_FILE,
   tileFile,
+  type IndexBook,
   type IndexEra,
   type IndexFile,
   type IndexStream,
@@ -26,6 +27,7 @@ import {
 } from '../lib/core/datafiles';
 import {
   COLLECTIONS,
+  loadBooks,
   type Anchor,
   type CollectionName,
   type Era,
@@ -183,6 +185,34 @@ function citedIds(records: unknown[]): { sources: Set<string>; anchors: Set<stri
   return { sources, anchors };
 }
 
+/** Every book_id cited anywhere in the given records (refs and derivation refs). */
+function citedBooks(records: unknown[]): Set<string> {
+  const ids = new Set<string>();
+  const walk = (v: unknown): void => {
+    if (Array.isArray(v)) return v.forEach(walk);
+    if (!v || typeof v !== 'object') return;
+    for (const [k, val] of Object.entries(v)) {
+      if (k === 'book_id' && typeof val === 'string') ids.add(val);
+      else walk(val);
+    }
+  };
+  records.forEach(walk);
+  return ids;
+}
+
+/** The names of the cited books, from books-meta.json (validation already checked the ids). */
+async function bookNames(
+  cited: Set<string>,
+  scriptureDir: string,
+): Promise<Record<string, IndexBook>> {
+  const out: Record<string, IndexBook> = {};
+  for (const b of await loadBooks(scriptureDir)) {
+    if (!cited.has(b.id)) continue;
+    out[b.id] = { id: b.id, name_am: b.name_am, ...(b.abbr_am ? { abbr_am: b.abbr_am } : {}) };
+  }
+  return out;
+}
+
 function readBuildId(env: Env): string {
   if (env.BK_BUILD_ID) return env.BK_BUILD_ID;
   if (env.CF_PAGES_COMMIT_SHA) return env.CF_PAGES_COMMIT_SHA;
@@ -260,6 +290,10 @@ export async function compileData(opts: CompileOptions): Promise<CompileResult> 
   const lock = await readLock(opts.lockFile ?? env.SCRIPTURE_LOCK_FILE ?? 'scripture.lock');
   const buildId = opts.buildId ?? readBuildId(env);
   const scriptureBooks = opts.scriptureBooks ?? (await publishedBooks(env, lock));
+  const books = await bookNames(
+    citedBooks(Object.values(data)),
+    opts.scriptureDir ?? (await resolveScriptureEnv(env)).SCRIPTURE_DIR,
+  );
   const eras = [...data.eras].sort((a, b) => a.order - b.order || byId(a, b));
   const live = eras.filter((e) => e.status === 'live');
 
@@ -317,6 +351,7 @@ export async function compileData(opts: CompileOptions): Promise<CompileResult> 
       buildId,
       scriptureVersion: lock,
       scriptureBooks,
+      books,
       timescale: null,
       layout: null,
       eras: eras.map((e) => indexEra(e, null)),
@@ -460,6 +495,7 @@ export async function compileData(opts: CompileOptions): Promise<CompileResult> 
       buildId,
       scriptureVersion: lock,
       scriptureBooks,
+      books,
       timescale: cfg,
       layout: {
         scholarly: { height: layouts.scholarly.height, lanes: layouts.scholarly.lanes },
